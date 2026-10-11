@@ -18,7 +18,7 @@ function ChainSymbol({ chain }: { chain: Chain }) {
   </g>;
   if (chain === "eth") return <g>
     <path d="M0-20 12 0 0 7-12 0Z" fill="currentColor" />
-    <path d="M0-20V7L12 0Z" fill="#d7ffcc" opacity=".45" />
+    <path d="M0-20V7L12 0Z" stroke="none" fill="#d7ffcc" opacity=".45" />
     <path d="M0 11 12 4 0 24-12 4Z" fill="currentColor" opacity=".8" />
   </g>;
   if (chain === "bnb") return <g fill="currentColor">
@@ -29,7 +29,7 @@ function ChainSymbol({ chain }: { chain: Chain }) {
   if (chain === "sol") return <path fill="currentColor" d="m-12-16 27 0-6 7h-27Zm-6 13h27l6 7h-27Zm6 13h27l-6 7h-27Z" />;
   return <g fill="currentColor">
     <path d="M-18-17 20-9 1 25Zm5 5L1 17l3-21Z" fillRule="evenodd" />
-    <path d="m-13-12 17 8 11-4ZM4-4 1 17 15-8Z" opacity=".35" />
+    <path d="m-13-12 17 8 11-4ZM4-4 1 17 15-8Z" stroke="none" opacity=".35" />
   </g>;
 }
 
@@ -63,7 +63,9 @@ function ChainNode({ x, y, chain, satellite = false, source = false, at = 4.4 }:
     <Impact at={at} small={satellite} />
     <g transform={`scale(${satellite ? .57 : source ? .9 : .78})`}>
       <g className={source ? "flow-source-form" : undefined} filter="url(#flow-neon)">
-        <ChainSymbol chain={chain} />
+        <g stroke="#ff334f" strokeWidth="1.3" strokeLinejoin="miter" strokeMiterlimit="4" paintOrder="fill stroke">
+          <ChainSymbol chain={chain} />
+        </g>
       </g>
     </g>
   </g>;
@@ -98,8 +100,10 @@ export function BlockchainField() {
     <svg viewBox="0 0 600 340" fill="none" className="flow-stage">
       <defs>
         <filter id="flow-neon" x="-100%" y="-100%" width="300%" height="300%" colorInterpolationFilters="sRGB">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="bloom" />
-          <feMerge><feMergeNode in="bloom" /><feMergeNode in="bloom" /><feMergeNode in="SourceGraphic" /></feMerge>
+          <feGaussianBlur in="SourceAlpha" stdDeviation=".9" result="soft-edge" />
+          <feFlood floodColor={neon} floodOpacity=".45" result="green" />
+          <feComposite in="green" in2="soft-edge" operator="in" result="bloom" />
+          <feMerge><feMergeNode in="bloom" /><feMergeNode in="SourceGraphic" /></feMerge>
         </filter>
         <radialGradient id="flow-halo">
           <stop stopColor={neon} stopOpacity=".3" />
