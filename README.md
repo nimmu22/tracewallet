@@ -23,7 +23,7 @@ The application now uses Next.js App Router directly, with React, TypeScript, Ta
 
 ## UI update
 
-The dashboard uses a graphite and cyan palette, a geometric chain mark, a decorative connected-node illustration, clearer metric cards, and responsive navigation. Light mode and reduced-motion support remain available. The illustration is decoration, not a fund-flow graph. Wallet scan logic, provider adapters, coverage notices, chart data, pagination, ENS support, and market refresh behavior are preserved.
+The dashboard uses a graphite and cyan palette, a geometric chain mark, an animated hexagon core with counter-rotating octagon and hexagon rings, travelling outline pulses and a faint honeycomb mesh, clearer metric cards, and responsive navigation. Light mode and reduced-motion support remain available. The illustration is decoration, not a fund-flow graph. It stays visible in a compact layout on mobile. The animation uses CSS without per-frame React renders and respects reduced-motion settings. Open `/animation-preview.html` to view the standalone animation. Wallet scan logic, provider adapters, coverage notices, chart data, pagination, ENS support, and market refresh behavior are preserved.
 
 The top bar shows **Total views** from a shared Turso database. It counts every full page load or refresh, including repeat visits by the same person. It does not represent unique visitors or online users. One document load reuses its request across React Strict Mode mounts. No browser fingerprint or wallet address is stored by the counter. Database increments are atomic and retain the existing `tracewallet_page_views` table. Missing configuration or a provider failure displays Unavailable instead of a fabricated count.
 

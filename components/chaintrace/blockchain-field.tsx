@@ -7,44 +7,66 @@ export function ChainMark({ size = 28 }: { size?: number }) {
   );
 }
 
-// A lightweight decorative network. It represents no wallet data or fund flows.
+function polygon(sides: number, radius: number, cx = 230, cy = 150) {
+  return Array.from({ length: sides }, (_, i) => {
+    const angle = (i * Math.PI * 2) / sides - Math.PI / 2;
+    return `${(cx + Math.cos(angle) * radius).toFixed(1)},${(cy + Math.sin(angle) * radius).toFixed(1)}`;
+  }).join(" ");
+}
+const hexagon = polygon(6, 70);
+const innerRing = polygon(6, 98);
+const octagon = polygon(8, 132);
+const meshCells = [
+  [45, 92], [77, 110], [45, 128], [13, 110], [77, 146], [45, 164],
+  [415, 136], [383, 154], [415, 172], [447, 154], [383, 190], [415, 208],
+];
+
+// Decorative geometry only. CSS animates HTML wrappers without per-frame React renders.
 export function BlockchainField() {
   return (
-    <div className="blockchain-field" aria-hidden="true">
-      <svg viewBox="0 0 460 300" fill="none">
-        <defs>
-          <linearGradient id="chain-line" x1="20" y1="20" x2="430" y2="260" gradientUnits="userSpaceOnUse">
-            <stop stopColor="var(--primary)" stopOpacity=".12" />
-            <stop offset=".5" stopColor="var(--primary)" stopOpacity=".7" />
-            <stop offset="1" stopColor="var(--primary)" stopOpacity=".12" />
-          </linearGradient>
-        </defs>
-        <g stroke="var(--primary)" opacity=".09">
-          <ellipse cx="238" cy="150" rx="195" ry="104" />
-          <ellipse cx="238" cy="150" rx="155" ry="80" />
-          <path d="M20 150h430M238 20v260" strokeDasharray="3 8" />
-        </g>
-        <g stroke="url(#chain-line)" strokeWidth="1.2">
-          <path d="m238 150-126-75-63 82 98 73 91-80 114 75 64-94-99-71-79 90" />
-          <path d="m112 75 205-15 35 165-205 5-35-155M49 157l367-26" opacity=".45" />
-        </g>
-        <g className="field-core" stroke="var(--primary)" strokeWidth="1.5">
-          <path d="m238 91 51 30v58l-51 30-51-30v-58Z" fill="var(--card)" />
-          <path d="m187 121 51 30 51-30M238 151v58m-34-98 51 30v28l-17 10-17-10v-28l17-10" />
-          <circle cx="238" cy="151" r="77" strokeDasharray="2 9" opacity=".3" />
-        </g>
-        {[[112,75],[49,157],[147,230],[352,225],[416,131],[317,60]].map(([x,y], i) => (
-          <g key={x} className={`field-node field-node-${i}`}>
-            <rect x={x-7} y={y-7} width="14" height="14" rx="3" fill="var(--card)" stroke="var(--primary)" strokeOpacity=".6" />
-            <circle cx={x} cy={y} r="2" fill="var(--primary)" />
+    <div className="blockchain-field polygon-field" aria-hidden="true">
+      <div className="polygon-stage">
+        <svg viewBox="0 0 460 300" fill="none" className="polygon-backdrop">
+          <g stroke="var(--primary)" strokeWidth=".8" opacity=".12">
+            {meshCells.map(([x, y]) => <polygon key={`${x}-${y}`} points={polygon(6, 20, x, y)} />)}
+            <path d="M18 150h120m184 0h120M230 8v18m0 248v18" strokeDasharray="2 6" />
           </g>
-        ))}
-        <g fill="var(--muted-foreground)" fontFamily="monospace" fontSize="10" letterSpacing="2">
-          <text x="82" y="53">ETH</text><text x="17" y="188">BASE</text>
-          <text x="120" y="260">ARB</text><text x="335" y="253">SOL</text>
-          <text x="391" y="109">BNB</text><text x="302" y="38">OP</text>
-        </g>
-      </svg>
+          <g stroke="var(--primary)" strokeWidth="1" opacity=".22">
+            <path d="m82 65 64 36m-64 134 64-36m232-134-64 36m64 134-64-36" />
+          </g>
+          <g fill="var(--muted-foreground)" fontFamily="monospace" fontSize="9" letterSpacing="2">
+            <text x="46" y="55">ETH</text><text x="24" y="253">BASE</text>
+            <text x="384" y="55">SOL</text><text x="384" y="253">BNB</text>
+          </g>
+          <g fill="var(--primary)">
+            <circle cx="82" cy="65" r="2" /><circle cx="82" cy="235" r="2" />
+            <circle cx="378" cy="65" r="2" /><circle cx="378" cy="235" r="2" />
+          </g>
+        </svg>
+        <div className="polygon-layer polygon-orbit-outer">
+          <svg viewBox="0 0 460 300" fill="none">
+            <polygon points={octagon} stroke="var(--primary)" strokeOpacity=".25" strokeWidth="1" />
+            <polygon className="polygon-tracer" points={octagon} stroke="var(--primary)" strokeWidth="2" pathLength="100" strokeDasharray="5 45" />
+            <g fill="var(--primary)">
+              <circle cx="230" cy="18" r="3" /><circle cx="230" cy="282" r="3" />
+            </g>
+          </svg>
+        </div>
+        <div className="polygon-layer polygon-orbit-inner">
+          <svg viewBox="0 0 460 300" fill="none">
+            <polygon points={innerRing} stroke="var(--primary)" strokeOpacity=".45" strokeWidth="1" strokeDasharray="4 8" />
+            <polygon className="polygon-tracer polygon-tracer-reverse" points={innerRing} stroke="var(--primary)" strokeOpacity=".75" strokeWidth="1.5" pathLength="100" strokeDasharray="3 30" />
+          </svg>
+        </div>
+        <div className="polygon-layer polygon-core">
+          <svg viewBox="0 0 460 300" fill="none">
+            <polygon points={hexagon} fill="var(--card)" stroke="var(--primary)" strokeWidth="1.6" />
+            <polygon points={polygon(6, 60)} stroke="var(--primary)" strokeOpacity=".2" strokeWidth=".8" />
+            <path d="m209 133-13 8v17l13 8 14-8v-17Zm42 0-14 8v17l14 8 13-8v-17Zm-30 17h18" stroke="var(--primary)" strokeWidth="2" strokeLinejoin="round" />
+            <text x="230" y="189" textAnchor="middle" fill="var(--muted-foreground)" fontFamily="monospace" fontSize="7" letterSpacing="2.5">CHAINTRACE</text>
+          </svg>
+        </div>
+      </div>
       <span className="field-caption mono">MULTI-CHAIN / ONE PERSPECTIVE</span>
     </div>
   );
