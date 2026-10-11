@@ -31,23 +31,32 @@ export async function fetchJSON<T>(
     budget = 180;
     reset = Date.now() + 60000;
   }
-  if (--budget < 0)
-    throw new Error(
-      "Provider request limit reached. Please retry in a minute.",
-    );
-  // End hung requests so a slow network cannot leave the wallet scan running indefinitely.
-  const r = await fetch(url, {
-    ...init,
-    signal: AbortSignal.timeout(10000),
-    headers: { Accept: "application/json", ...init.headers },
-  });
-  if (!r.ok)
-    throw new Error(
-      r.status === 429
-        ? "Provider rate limit reached. Try again shortly."
-        : "Provider temporarily unavailable (HTTP " + r.status + ").",
-    );
-  return r.json() as Promise<T>;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    if (--budget < 0) throw new Error("Provider request limit reached. Please retry in a minute.");
+    try {
+      const r = await fetch(url, {
+        ...init,
+        signal: init.signal ? AbortSignal.any([init.signal, AbortSignal.timeout(10000)]) : AbortSignal.timeout(10000),
+        headers: { Accept: "application/json", ...init.headers },
+      });
+      if (!r.ok) {
+        if (attempt === 0 && (r.status === 429 || r.status >= 500)) {
+          await r.body?.cancel();
+          await new Promise(resolve => setTimeout(resolve, 750));
+          continue;
+        }
+        throw new Error(r.status === 429
+          ? "Provider rate limit reached. Try again shortly."
+          : "Provider temporarily unavailable (HTTP " + r.status + ").");
+      }
+      return await r.json() as T;
+    } catch (error) {
+      const transient = error instanceof Error && (error.name === "TimeoutError" || error instanceof TypeError);
+      if (attempt === 0 && transient && !init.signal?.aborted) continue;
+      throw error;
+    }
+  }
+  throw new Error("Provider temporarily unavailable.");
 }
 export const isoSeconds = (v: unknown) => {
   const n = Number(v);

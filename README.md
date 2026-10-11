@@ -35,8 +35,11 @@ Validation:
 ```sh
 npm run typecheck
 npm run test:counter
+npm run test:providers
 npm run build
 ```
+
+Ten provider tests cover authenticated and public fallback paths, HTTP and JSON rate limits, accurate empty history, malformed responses, and interrupted pagination. They use fixtures; live unauthenticated Ethereum and Avalanche adapters were also checked.
 
 The five counter tests verify origin rejection, missing configuration, atomic increment response, query failure and invalid response handling. They mock storage; a production total still needs configured Turso credentials. Visual browser QA and live provider/counter checks must be completed in an environment with browser access.
 
@@ -55,16 +58,18 @@ The five counter tests verify origin rejection, missing configuration, atomic in
 
 | Network | Provider | Configuration |
 | --- | --- | --- |
-| Ethereum | eth.blockscout.com | Anonymous |
-| Base | base.blockscout.com | Anonymous |
-| Arbitrum | arbitrum.blockscout.com | Anonymous |
-| Optimism | optimism.blockscout.com | Anonymous |
-| Polygon | polygon.blockscout.com | Anonymous |
-| BNB Chain | Etherscan V2, chain 56 | API key with access to the chain |
-| Avalanche C-chain | Etherscan V2, chain 43114 | API key with access to the chain |
+| Ethereum | Blockscout → Etherscan (if configured) → Routescan | Public fallback; optional provider keys |
+| Base | Blockscout PRO → public instance → Etherscan | BLOCKSCOUT_API_KEY or ETHERSCAN_API_KEY with chain access when public access is blocked |
+| Arbitrum | Blockscout PRO → public instance → Etherscan | Same as Base |
+| Optimism | Blockscout PRO → public instance → Etherscan | Same as Base |
+| Polygon | Blockscout PRO → public instance → Etherscan | Same as Base |
+| BNB Chain | Etherscan V2, chain 56 | ETHERSCAN_API_KEY with BNB history access |
+| Avalanche C-chain | Etherscan V2 (if configured) → Routescan | Public Routescan works without a key |
 | Solana | Public Solana JSON-RPC | Optional dedicated RPC recommended |
 
-A valid EVM address scans the seven EVM networks. Solana scans only Solana. A network requiring credentials is shown as unavailable until configured. Etherscan free-tier support varies by network; the app does not claim that one free key unlocks every chain.
+A valid EVM address scans seven EVM networks. Solana scans only Solana. Each chain attempts its supported providers independently. Public Blockscout instances can return HTTP 403; anonymous access is not guaranteed. Configure server-only keys in Vercel and redeploy to unlock authenticated history. Blockscout PRO access to Base requires an appropriate paid plan. Etherscan chain access also depends on the plan; do not assume a free key unlocks every chain. Routescan currently indexes Ethereum and Avalanche but not Base, Arbitrum, Polygon or BNB.
+
+Failed network cards retain explorer access and have a Retry button that reloads only that network. A verified empty history displays zero and “No normal activity”; a blocked or malformed response is never converted to zero. Provider fallbacks preserve available data and disclose missing fee coverage.
 
 ### Environment variables
 
@@ -73,13 +78,15 @@ All credentials stay in server routes. Never prefix them with `NEXT_PUBLIC_`, `V
 | Variable | Purpose |
 | --- | --- |
 | `COINGECKO_API_KEY` | Optional CoinGecko **Demo** key. The Pro endpoint is not configured. |
-| `ETHERSCAN_API_KEY` | Etherscan V2 history for BNB and Avalanche; chain access depends on plan. |
+| `BLOCKSCOUT_API_KEY` | Optional Blockscout PRO key for Ethereum, Base, Arbitrum, Optimism and Polygon. Chain/plan access required. |
+| `ETHERSCAN_API_KEY` | Etherscan V2 history/fallback for all EVM networks; chain access depends on plan. Required for BNB. |
+| `ROUTESCAN_API_KEY` | Optional Routescan key to increase limits for Ethereum/Avalanche. Sent server-side in an HTTP header. |
 | `ETHEREUM_RPC_URL` | Optional Ethereum mainnet RPC for ENS. Public endpoints are used by default. |
 | `SOLANA_RPC_URL` | Optional Solana RPC. Defaults to api.mainnet-beta.solana.com. |
 | `TURSO_DATABASE_URL` | Shared page-view database URL (`libsql://...` or `https://...`). |
 | `TURSO_AUTH_TOKEN` | Server-only token for the page-view database. |
 
-No keys are required for the five Blockscout integrations. If CoinGecko is blocked or throttled, current market data falls back to CoinPaprika and the footer changes attribution. Both sources rank the market dynamically. The native asset ID map only supports fee conversion; it does not define the top ten. The fallback uses symbol monograms when a provider supplies no logo URL.
+Public Blockscout requests work only while the instance permits anonymous access. If CoinGecko is blocked or throttled, current market data falls back to CoinPaprika and the footer changes attribution. Both sources rank the market dynamically. The native asset ID map only supports fee conversion; it does not define the top ten. The fallback uses symbol monograms when a provider supplies no logo URL.
 
 ## Accuracy and coverage
 
@@ -89,7 +96,7 @@ EVM providers load at most three pages (usually 150 normal transactions) per cha
 
 “Complete” means the provider exhausted **normal transaction** history. It does not imply all possible wallet interactions are covered. Internal calls, separate token transfer events, NFT activity, account abstraction reimbursements, and off-chain activity are excluded. Activity shares and “most active” compare the loaded sample, which can favor chains whose latest sample is denser. Networks that fail are never counted as unused.
 
-Fees count transactions sent by the wallet, including failed transactions. Incoming transaction fees are not charged to the recipient. The table displays the transaction's fee paid by its sender. Blockscout supplies the actual fee; the Etherscan fallback calculates `gasUsed * gasPrice` for BNB/Avalanche. Native values are rounded for display. Different native tokens are kept separate and never added as if they were the same asset.
+Fees count transactions sent by the wallet, including failed transactions. Incoming transaction fees are not charged to the recipient. The table displays the transaction's fee paid by its sender. Blockscout supplies the actual fee; the Etherscan/Routescan fallback calculates `gasUsed * gasPrice` where it represents total fees. Base and Optimism txlist responses omit L1 data fees, so their fallback total fees remain unknown rather than understating costs. Use Blockscout with actual fee data for full loaded fee totals. Native values are rounded for display. Different native tokens are kept separate and never added as if they were the same asset.
 
 USD values use current quotes and are labeled **Estimated using current token price**. They are not historical costs. Unpriced networks are excluded from the priced subtotal. A retained market result is labeled as last-known data if a refresh fails. Quote timestamps and provider freshness can lag the refresh time.
 
@@ -100,7 +107,7 @@ Solana loads up to 100 finalized signatures and attempts details for ten transac
 - `app/page.tsx`: dashboard composition, scan lifecycle, and user interactions.
 - `components/chaintrace/`: isolated clock, intro, and lazy-loaded chart components.
 - `services/types.ts`: network registry and normalized provider contract.
-- `services/evm.ts`: Blockscout/Etherscan normalization and wallet-paid fee aggregation.
+- `services/evm.ts`: Blockscout/Blockscout PRO/Etherscan/Routescan fallbacks, normalization and wallet-paid fee aggregation.
 - `services/{ethereum,base,arbitrum,optimism,polygon,bnb,avalanche}.ts`: named EVM adapter entry points.
 - `services/solana.ts`: signature history and parsed RPC details.
 - `services/ens.ts`: resolution and forward-verified reverse lookup.
@@ -108,7 +115,7 @@ Solana loads up to 100 finalized signatures and attempts details for ten transac
 - `services/http.ts`: bounded caching, in-flight reuse, request budget, and timeouts.
 - `app/api/{wallet,resolve,market}/route.ts`: server-only provider access.
 
-Wallet responses cache for two minutes and markets for one minute. Caches and the request budget are per Worker isolate, not a global abuse-prevention service. A public high-traffic deployment should add a shared rate limiter or platform firewall and dedicated provider plans. Requests time out after ten seconds; a scan can take longer because pages are fetched in sequence. Market requests pause when the tab is hidden. Address validation is debounced, but network lookup requires explicit submission.
+Wallet responses cache for two minutes and markets for one minute. Caches and the request budget are per Worker isolate, not a global abuse-prevention service. A public high-traffic deployment should add a shared rate limiter or platform firewall and dedicated provider plans. Individual requests time out after ten seconds. Transient HTTP 429/5xx or network timeouts retry once; HTTP 403 immediately advances to a different provider. EVM provider work has a shared 45-second deadline and the wallet route allows 60 seconds. A scan can take longer than one request because pages are fetched in sequence. Market requests pause when the tab is hidden. Address validation is debounced, but network lookup requires explicit submission.
 
 The optional WebMCP tool `analyze_public_wallet` reuses the same scan handler. It feature-detects browser support, validates inputs, and unregisters on unmount.
 
@@ -129,4 +136,7 @@ Production deployment is not verified by the local build. Check wallet scans, ma
 - [CoinPaprika developer API](https://coinpaprika.com/api/developers/)
 - [Solana signatures](https://solana.com/docs/rpc/http/getsignaturesforaddress)
 - [Etherscan V2](https://docs.etherscan.io/)
+- [Blockscout PRO Base access](https://docs.blockscout.com/base-api)
+- [Routescan supported chains](https://routescan.io/docs/getting-started/supported-chains)
+- [Routescan keyless limits](https://routescan.io/docs/plans-and-limits/api-keys-and-pricing)
 
