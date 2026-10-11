@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "./blockchain.css";
 export const metadata: Metadata = {
   title: "CHAINTRACE — Multi-chain wallet intelligence",
   description:

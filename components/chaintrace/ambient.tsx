@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, memo } from "react";
-import { AudioLines } from "lucide-react";
+import { ChainMark } from "./blockchain-field";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 // Isolate the second-by-second clock so it does not redraw the market table or charts.
 export const LiveClock = memo(function LiveClock() {
@@ -92,7 +92,7 @@ export function Opening() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.1, duration: 0.5 }}
           >
-            <AudioLines />
+            <ChainMark />
             <span>CHAINTRACE</span>
           </motion.div>
           <motion.p

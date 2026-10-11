@@ -8,7 +8,6 @@ import {
   Suspense,
 } from "react";
 import {
-  AudioLines,
   Search,
   ArrowRight,
   ArrowUpRight,
@@ -53,6 +52,8 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { Opening, LiveClock } from "@/components/chaintrace/ambient";
+import { ChainMark, BlockchainField } from "@/components/chaintrace/blockchain-field";
+import PageViewCounter from "@/components/page-view-counter";
 import {
   networks,
   networkById,
@@ -478,11 +479,12 @@ export default function Home() {
       <Opening />
       <header className="topbar">
         <a className="brand" href="#">
-          <AudioLines />
+          <ChainMark />
           <b>CHAINTRACE</b>
           <small>WALLET INTELLIGENCE</small>
         </a>
         <div className="header-right">
+          <PageViewCounter />
           <span className="header-status">
             <i /> PUBLIC DATA
           </span>
@@ -501,12 +503,14 @@ export default function Home() {
         <div className="page-heading">
           <div>
             <div className="eyebrow">ON-CHAIN EXPLORER</div>
-            <h1>Every chain. One clear picture.</h1>
-            <p>Trace the activity behind any public wallet.</p>
+            <h1>Follow the wallet.<br /><span>See the chain.</span></h1>
+            <p>Public wallet activity, network history and gas spending.<br className="hero-break" /> One address. A clearer view of the blockchain.</p>
+            <div className="hero-signals">
+              <span><Layers3 size={13} /> EVM + Solana</span>
+              <span><ShieldCheck size={13} /> Read-only by design</span>
+            </div>
           </div>
-          <span className="read-only">
-            <ShieldCheck size={15} /> Read-only by design
-          </span>
+          <BlockchainField />
         </div>
         <form
           className={"search-box" + (error ? " invalid" : "")}
@@ -1212,7 +1216,7 @@ export default function Home() {
         </section>
         <footer>
           <span className="brand">
-            <AudioLines size={17} />
+            <ChainMark size={20} />
             CHAINTRACE
           </span>
           <p>
