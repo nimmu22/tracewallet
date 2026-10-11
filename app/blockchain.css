@@ -51,9 +51,6 @@ h1 > span { color: var(--primary); }
 .blockchain-field { width: min(40%, 460px); position: relative; flex-shrink: 0; background-image: radial-gradient(circle at center, color-mix(in srgb, var(--primary) 6%, transparent), transparent 65%); }
 .blockchain-field svg { width: 100%; display: block; }
 .field-caption { display: block; text-align: center; font-size: 8px; letter-spacing: 2px; color: var(--muted-foreground); padding-bottom: 14px; }
-.field-node { animation: node-light 5s ease-in-out infinite; }
-.field-node-1 { animation-delay: -.8s; }.field-node-2 { animation-delay: -1.6s; }.field-node-3 { animation-delay: -2.4s; }.field-node-4 { animation-delay: -3.2s; }.field-node-5 { animation-delay: -4s; }
-@keyframes node-light { 0%,100% { opacity: .45; } 45%,60% { opacity: 1; } }
 .search-box { border-radius: 12px; padding: 8px 8px 8px 22px; gap: 15px; min-height: 68px; border-color: color-mix(in srgb, var(--primary) 28%, var(--border)); box-shadow: 0 8px 35px #0000000a; }
 .search-box > svg { color: var(--primary); }
 .search-box input { font-size: 13px; padding: 14px 0; }
@@ -186,26 +183,24 @@ footer { padding: 28px 0; }
 @media(prefers-reduced-motion:reduce) { .field-node { animation: none; }.network-card:hover { transform: none; } }
 
 
-/* Rotating octagon / hexagon assembly. The centre and labels stay readable. */
-.polygon-stage { position: relative; width: 100%; aspect-ratio: 460 / 300; isolation: isolate; }
-.polygon-stage::before { content: ""; position: absolute; inset: 18% 28%; border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--primary) 12%, transparent), transparent 70%); animation: polygon-breathe 5s ease-in-out infinite; }
-.polygon-layer { position: absolute; inset: 0; transform-origin: 50% 50%; pointer-events: none; }
-.polygon-backdrop { position: absolute; inset: 0; }
-.polygon-orbit-outer { animation: polygon-rotate 36s linear infinite; }
-.polygon-orbit-inner { animation: polygon-rotate 24s linear infinite reverse; }
-.polygon-core { animation: polygon-float 6s ease-in-out infinite; }
-.polygon-tracer { animation: polygon-travel 7s linear infinite; }
-.polygon-tracer-reverse { animation-direction: reverse; animation-duration: 10s; }
-.polygon-field .field-caption { margin-top: 10px; }
-@keyframes polygon-rotate { to { transform: rotate(360deg); } }
-@keyframes polygon-travel { to { stroke-dashoffset: -100; } }
-@keyframes polygon-float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
-@keyframes polygon-breathe { 0%,100% { opacity: .5; transform: scale(.94); } 50% { opacity: 1; transform: scale(1.08); } }
+/* A kinetic sculpture of solid hexagonal tiles. No outlined paths or wireframe. */
+.solid-stage { position: relative; width: 100%; aspect-ratio: 460 / 320; perspective: 700px; isolation: isolate; }
+.solid-aura { position: absolute; inset: 15% 12%; background: radial-gradient(ellipse, color-mix(in srgb, var(--primary) 17%, transparent), transparent 65%); animation: solid-glow 8s ease-in-out infinite; }
+.solid-shadow { position: absolute; left: 19%; right: 19%; bottom: 9%; height: 15%; border-radius: 50%; background: radial-gradient(ellipse, #0009, transparent 70%); filter: blur(9px); }
+.solid-board { position: absolute; inset: 0; transform-style: preserve-3d; transform: rotateX(32deg) rotateZ(-18deg); animation: solid-drift 14s ease-in-out infinite; }
+.solid-tile { position: absolute; width: 15.22%; aspect-ratio: 80 / 96; animation: solid-wave 5.8s cubic-bezier(.45,0,.55,1) infinite; animation-delay: var(--tile-delay); filter: drop-shadow(0 8px 5px #0005); }
+.solid-tile svg { width: 100%; height: 100%; display: block; }
+.solid-tile-graphite { --tile-highlight: #36535a; --tile-color: #142e34; --tile-side: #122529; --tile-depth: #091a1e; }
+.solid-tile-jade { --tile-highlight: #46bfae; --tile-color: #177e73; --tile-side: #13645e; --tile-depth: #0b403d; }
+.solid-tile-mint { --tile-highlight: #b1ffdf; --tile-color: #42d3bf; --tile-side: #2c9a8e; --tile-depth: #1b6c65; }
+.solid-field .field-caption { margin-top: 0; }
+:root[data-theme="light"] .solid-tile-graphite { --tile-highlight: #688f98; --tile-color: #355c65; --tile-side: #28454d; --tile-depth: #1c363e; }
+@keyframes solid-wave { 0%,100% { transform: translateY(0); } 45%,55% { transform: translateY(var(--tile-lift)); } }
+@keyframes solid-drift { 0%,100% { transform: rotateX(32deg) rotateZ(-18deg) translateY(0); } 50% { transform: rotateX(22deg) rotateZ(-10deg) translateY(-5px); } }
+@keyframes solid-glow { 0%,100% { opacity: .55; transform: scale(.95); } 50% { opacity: .9; transform: scale(1.08); } }
 @media(max-width:600px) {
   .page-heading { flex-direction: column; align-items: stretch; gap: 0; }
-  .polygon-field { display: block; width: min(100%, 280px); margin: 0 auto 20px; }
-  .polygon-field .field-caption { font-size: 7px; margin-top: 4px; padding-bottom: 0; }
+  .solid-field { display: block; width: min(100%, 290px); margin: 0 auto 18px; }
+  .solid-field .field-caption { font-size: 7px; padding-bottom: 0; }
 }
-@media(prefers-reduced-motion:reduce) {
-  .polygon-stage::before, .polygon-layer, .polygon-tracer { animation: none; }
-}
+@media(prefers-reduced-motion:reduce) { .solid-tile, .solid-board, .solid-aura { animation: none; } }
