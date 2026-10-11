@@ -202,3 +202,7 @@ footer { padding: 28px 0; }
   .flow-source-form { animation: none; }
   .flow-particle, .flow-impact, .flow-dust { display: none; }
 }
+
+.provider-retry { background: transparent; color: var(--accent, #39ff14); border: 1px solid currentColor; border-radius: 4px; padding: 5px 9px; margin: 8px 8px 0 0; cursor: pointer; font: inherit; }
+.provider-retry:disabled { opacity: .45; cursor: wait; }
+.provider-retry:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }

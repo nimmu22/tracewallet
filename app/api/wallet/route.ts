@@ -1,6 +1,7 @@
 import { getWalletChain } from "@/services";
 import { addressKind } from "@/services/validation";
 import { networkById } from "@/services/types";
+export const maxDuration = 60;
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const address = url.searchParams.get("address")?.trim() ?? "";

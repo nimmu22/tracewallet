@@ -90,8 +90,11 @@ export function summarize(
 async function blockscout(
   chain: Network,
   address: string,
+  pro = false,
+  signal?: AbortSignal,
 ): Promise<ChainStats> {
-  const base = chain.api!;
+  const base = pro ? `https://api.blockscout.com/${chain.chainId}` : chain.api!;
+  const auth: Record<string, string> = pro ? { apikey: process.env.BLOCKSCOUT_API_KEY! } : {};
   let txs: WalletTransaction[] = [];
   let cursor: Record<string, string> | null = null;
   let complete = false;
@@ -99,20 +102,18 @@ async function blockscout(
   // Bound pagination to keep anonymous API use predictable. Coverage remains visible in every aggregate.
   for (let page = 0; page < 3; page++) {
     try {
-      const query: string = cursor ? "?" + new URLSearchParams(cursor) : "";
+      const query = "?" + new URLSearchParams({ ...cursor, ...auth });
       const data: {
         items: BlockTx[];
         next_page_params: Record<string, string> | null;
       } = await fetchJSON<{
         items: BlockTx[];
         next_page_params: Record<string, string> | null;
-      }>(`${base}/api/v2/addresses/${address}/transactions${query}`);
-      if (!Array.isArray(data.items))
+      }>(`${base}/api/v2/addresses/${address}/transactions${query}`, { signal });
+      if (!Array.isArray(data.items) || data.items.some(t => !t || !normalHash.test(t.hash)))
         throw new Error("Unexpected provider response.");
       txs.push(
-        ...data.items
-          .filter((t) => normalHash.test(t.hash))
-          .map((t) => normalize(t, chain, address)),
+        ...data.items.map((t) => normalize(t, chain, address)),
       );
       cursor = data.next_page_params;
       if (!cursor) {
@@ -129,7 +130,8 @@ async function blockscout(
   if (!complete) {
     try {
       const old = await fetchJSON<{ result: LegacyTx[] }>(
-        `${base}/api?module=account&action=txlist&address=${address}&page=1&offset=1&sort=asc`,
+        `${base}/api?` + new URLSearchParams({ module: "account", action: "txlist", address, page: "1", offset: "1", sort: "asc", ...auth }),
+        { signal },
       );
       if (Array.isArray(old.result) && old.result[0])
         first = isoSeconds(old.result[0].timeStamp);
@@ -142,38 +144,56 @@ async function blockscout(
     txs,
     complete,
     first,
-    "Blockscout",
+    pro ? "Blockscout PRO" : "Blockscout",
     complete
       ? "All normal transactions returned by this provider."
       : `${interrupted ? "Provider interrupted pagination. " : ""}Latest ${txs.length} normal transactions loaded; gas and charts cover this sample.`,
   );
 }
-async function etherscan(chain: Network, address: string): Promise<ChainStats> {
-  const key = process.env.ETHERSCAN_API_KEY;
-  if (!key)
-    throw new Error(
-      "Not supported by the current data provider. Configure ETHERSCAN_API_KEY for this network.",
-    );
-  const url = new URL("https://api.etherscan.io/v2/api");
+interface LegacyResponse {
+  status: string;
+  message: string;
+  result: LegacyTx[] | string | null;
+}
+function transactionRows(data: LegacyResponse): LegacyTx[] {
+  if (data.status === "0" && /no transactions found/i.test(data.message) && Array.isArray(data.result) && data.result.length === 0) return [];
+  if (data.status !== "1" || !Array.isArray(data.result))
+    throw new Error("History provider could not serve this network. Check API key and chain access.");
+  // Reject malformed successful responses rather than converting them into an unused wallet.
+  if (data.result.some(t => !t || !normalHash.test(t.hash) || typeof t.from !== "string" || typeof t.to !== "string"))
+    throw new Error("History provider returned invalid transactions.");
+  return data.result;
+}
+// Pace calls in each process so a parallel seven-network scan does not burst past free API limits.
+const nextCall = new Map<string, number>();
+async function legacyRows(url: string, init: RequestInit, routescan: boolean): Promise<LegacyTx[]> {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const provider = routescan ? "routescan" : "etherscan";
+    const now = Date.now();
+    const at = Math.max(now, nextCall.get(provider) ?? now);
+    nextCall.set(provider, at + (routescan ? 550 : 250));
+    if (at > now) await new Promise(resolve => setTimeout(resolve, at - now));
+    init.signal?.throwIfAborted();
+    const data = await fetchJSON<LegacyResponse>(url, init);
+    if (attempt === 0 && data.status === "0" && /rate limit|timeout|server too busy/i.test(`${data.message} ${typeof data.result === "string" ? data.result : ""}`)) {
+      await new Promise(resolve => setTimeout(resolve, 750));
+      continue;
+    }
+    return transactionRows(data);
+  }
+  throw new Error("History provider is temporarily busy.");
+}
+async function legacyHistory(chain: Network, address: string, routescan = false, signal?: AbortSignal): Promise<ChainStats> {
+  const url = new URL(routescan
+    ? `https://api.routescan.io/v2/network/mainnet/evm/${chain.chainId}/etherscan/api`
+    : "https://api.etherscan.io/v2/api");
+  const key = routescan ? process.env.ROUTESCAN_API_KEY : process.env.ETHERSCAN_API_KEY;
   url.search = new URLSearchParams({
-    chainid: String(chain.chainId),
-    module: "account",
-    action: "txlist",
-    address,
-    page: "1",
-    offset: "150",
-    sort: "desc",
-    apikey: key,
+    ...(routescan ? {} : { chainid: String(chain.chainId), apikey: key! }),
+    module: "account", action: "txlist", address, page: "1", offset: "150", sort: "desc",
   }).toString();
-  const data = await fetchJSON<{
-    status: string;
-    message: string;
-    result: LegacyTx[] | string;
-  }>(url.toString());
-  if (!Array.isArray(data.result))
-    throw new Error(
-      "The configured Etherscan plan could not serve this network.",
-    );
+  const init: RequestInit = { signal, ...(routescan && key ? { headers: { apikey: key } } : {}) };
+  const data = { result: await legacyRows(url.toString(), init, routescan) };
   const complete = data.result.length < 150;
   const txs = data.result
     .filter((t) => normalHash.test(t.hash))
@@ -189,8 +209,9 @@ async function etherscan(chain: Network, address: string): Promise<ChainStats> {
         from: t.from,
         to: t.to || null,
         value: native(t.value),
-        fee: raw ? native(raw) : null,
-        gasUsed: Number(t.gasUsed),
+        // Base/Optimism txlist omits L1 data fees. Do not present execution-only fees as total gas.
+        fee: raw && chain.id !== "base" && chain.id !== "optimism" ? native(raw) : null,
+        gasUsed: /^\d+$/.test(t.gasUsed) ? Number(t.gasUsed) : null,
         paidByWallet: t.from.toLowerCase() === address.toLowerCase(),
         type:
           t.functionName?.split("(")[0] ||
@@ -203,24 +224,38 @@ async function etherscan(chain: Network, address: string): Promise<ChainStats> {
     url.searchParams.set("sort", "asc");
     url.searchParams.set("offset", "1");
     try {
-      const old = await fetchJSON<{ result: LegacyTx[] }>(url.toString());
-      if (Array.isArray(old.result))
-        first = isoSeconds(old.result[0]?.timeStamp);
+      const old = await legacyRows(url.toString(), init, routescan);
+      first = isoSeconds(old[0]?.timeStamp);
     } catch {}
   }
-  // This fallback is used for BNB and Avalanche; L2s retain Blockscout's actual fee including network-specific components.
   return summarize(
     chain,
     txs,
     complete,
     first,
-    "Etherscan V2",
-    complete
+    routescan ? "Routescan" : "Etherscan V2",
+    (complete
       ? "All normal transactions returned by provider."
-      : "Latest 150 normal transactions; fees and charts cover this sample.",
+      : "Latest 150 normal transactions; fees and charts cover this sample.") +
+      (chain.id === "base" || chain.id === "optimism" ? " Total gas fees need a provider with L1 fee data." : ""),
   );
 }
 export const getEvmStats = (chain: Network, address: string) =>
-  cached(`${chain.id}:${address.toLowerCase()}`, 120000, () =>
-    chain.api ? blockscout(chain, address) : etherscan(chain, address),
-  );
+  cached(`${chain.id}:${address.toLowerCase()}`, 120000, async () => {
+    const loaders: (() => Promise<ChainStats>)[] = [];
+    const signal = AbortSignal.timeout(45000);
+    if (chain.api) {
+      if (process.env.BLOCKSCOUT_API_KEY) loaders.push(() => blockscout(chain, address, true, signal));
+      loaders.push(() => blockscout(chain, address, false, signal));
+    }
+    if (process.env.ETHERSCAN_API_KEY) loaders.push(() => legacyHistory(chain, address, false, signal));
+    // Routescan currently indexes Ethereum and Avalanche, not Base/Arbitrum/Polygon/BNB.
+    if (chain.id === "ethereum" || chain.id === "avalanche") loaders.push(() => legacyHistory(chain, address, true, signal));
+    for (const load of loaders) {
+      if (signal.aborted) break;
+      try { return await load(); } catch { /* Continue to the next independent data source. */ }
+    }
+    if (!process.env.ETHERSCAN_API_KEY && (!chain.api || !process.env.BLOCKSCOUT_API_KEY))
+      throw new Error(`${chain.name} history needs a configured data source. ${chain.api ? "Set BLOCKSCOUT_API_KEY or " : "Set "}ETHERSCAN_API_KEY with access to this network.`);
+    throw new Error(`${chain.name} history sources are temporarily unavailable. Retry shortly or check provider chain access.`);
+  });

@@ -315,6 +315,31 @@ export default function Home() {
       running.current = false;
     }
   }, []);
+  const retryNetwork = async (network: Network) => {
+    if (!wallet || running.current) return;
+    running.current = true;
+    const controller = new AbortController();
+    active.current?.abort();
+    active.current = controller;
+    setBusy(true);
+    setChains(previous => ({ ...previous, [network.id]: { status: "scanning" } }));
+    try {
+      const data = await json<ChainStats>(
+        `/api/wallet?chain=${network.id}&address=${encodeURIComponent(wallet.address)}`,
+        controller.signal,
+      );
+      if (!controller.signal.aborted)
+        setChains(previous => ({ ...previous, [network.id]: { status: "done", data } }));
+    } catch (error) {
+      if (!controller.signal.aborted)
+        setChains(previous => ({ ...previous, [network.id]: {
+          status: "error", error: error instanceof Error ? error.message : "History source is temporarily unavailable.",
+        } }));
+    } finally {
+      if (!controller.signal.aborted) setBusy(false);
+      running.current = false;
+    }
+  };
   useEffect(() => {
     type Context = {
       registerTool: (
@@ -898,7 +923,8 @@ export default function Home() {
           <div className="network-grid">
             {visible.map((n) => {
               const state = chains[n.id],
-                s = state?.data;
+                s = state?.data,
+                noActivity = s?.complete && s.transactionCount === 0;
               const share = total && s ? (s.transactionCount / total) * 100 : 0;
               return (
                 <article className="network-card" key={n.id}>
@@ -932,11 +958,11 @@ export default function Home() {
                   )}
                   <div className="network-row">
                     <span>First activity</span>
-                    <span>{wallet ? date(s?.firstActivity) : "—"}</span>
+                    <span>{noActivity ? "No normal activity" : wallet ? date(s?.firstActivity) : "—"}</span>
                   </div>
                   <div className="network-row">
                     <span>Last activity</span>
-                    <span>{wallet ? date(s?.lastActivity) : "—"}</span>
+                    <span>{noActivity ? "No normal activity" : wallet ? date(s?.lastActivity) : "—"}</span>
                   </div>
                   <div className="network-row">
                     <span>Gas spent</span>
@@ -981,11 +1007,19 @@ export default function Home() {
                     <span>{s ? `${share.toFixed(1)}%` : "—"}</span>
                   </div>
                   {state?.error && (
-                    <p className="provider-note">{state.error}</p>
+                    <div className="provider-note" role="status">
+                      <p>{state.error}</p>
+                      <button type="button" className="provider-retry" disabled={busy} onClick={() => void retryNetwork(n)}>
+                        Retry {n.name}
+                      </button>{" "}
+                      <a href={`${n.explorer}/address/${wallet!.address}`} target="_blank" rel="noreferrer">Explorer ↗</a>
+                    </div>
                   )}
                   {s && (
                     <p className="provider-note">
                       {s.note}{" "}
+                      {s.provider === "Routescan" && <><a href="https://routescan.io" target="_blank" rel="noreferrer">Powered by Routescan.io APIs</a>{" · "}</>}
+                      {s.provider === "Etherscan V2" && <><a href="https://etherscan.io" target="_blank" rel="noreferrer">Powered by Etherscan.io APIs</a>{" · "}</>}
                       <a
                         href={`${n.explorer}/address/${wallet!.address}`}
                         target="_blank"
