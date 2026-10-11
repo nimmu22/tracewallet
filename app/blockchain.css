@@ -183,24 +183,22 @@ footer { padding: 28px 0; }
 @media(prefers-reduced-motion:reduce) { .field-node { animation: none; }.network-card:hover { transform: none; } }
 
 
-/* A kinetic sculpture of solid hexagonal tiles. No outlined paths or wireframe. */
-.solid-stage { position: relative; width: 100%; aspect-ratio: 460 / 320; perspective: 700px; isolation: isolate; }
-.solid-aura { position: absolute; inset: 15% 12%; background: radial-gradient(ellipse, color-mix(in srgb, var(--primary) 17%, transparent), transparent 65%); animation: solid-glow 8s ease-in-out infinite; }
-.solid-shadow { position: absolute; left: 19%; right: 19%; bottom: 9%; height: 15%; border-radius: 50%; background: radial-gradient(ellipse, #0009, transparent 70%); filter: blur(9px); }
-.solid-board { position: absolute; inset: 0; transform-style: preserve-3d; transform: rotateX(32deg) rotateZ(-18deg); animation: solid-drift 14s ease-in-out infinite; }
-.solid-tile { position: absolute; width: 15.22%; aspect-ratio: 80 / 96; animation: solid-wave 5.8s cubic-bezier(.45,0,.55,1) infinite; animation-delay: var(--tile-delay); filter: drop-shadow(0 8px 5px #0005); }
-.solid-tile svg { width: 100%; height: 100%; display: block; }
-.solid-tile-graphite { --tile-highlight: #36535a; --tile-color: #142e34; --tile-side: #122529; --tile-depth: #091a1e; }
-.solid-tile-jade { --tile-highlight: #46bfae; --tile-color: #177e73; --tile-side: #13645e; --tile-depth: #0b403d; }
-.solid-tile-mint { --tile-highlight: #b1ffdf; --tile-color: #42d3bf; --tile-side: #2c9a8e; --tile-depth: #1b6c65; }
-.solid-field .field-caption { margin-top: 0; }
-:root[data-theme="light"] .solid-tile-graphite { --tile-highlight: #688f98; --tile-color: #355c65; --tile-side: #28454d; --tile-depth: #1c363e; }
-@keyframes solid-wave { 0%,100% { transform: translateY(0); } 45%,55% { transform: translateY(var(--tile-lift)); } }
-@keyframes solid-drift { 0%,100% { transform: rotateX(32deg) rotateZ(-18deg) translateY(0); } 50% { transform: rotateX(22deg) rotateZ(-10deg) translateY(-5px); } }
-@keyframes solid-glow { 0%,100% { opacity: .55; transform: scale(.95); } 50% { opacity: .9; transform: scale(1.08); } }
+/* A wide flow composition. Routes exist only as invisible motion paths. */
+.flow-field { width: min(47%, 600px); background-image: none; }
+.flow-stage { width: 100%; display: block; overflow: visible; }
+.flow-ethereum-main { animation: flow-float 7s ease-in-out infinite; }
+.flow-ethereum-small { animation: flow-float 7s ease-in-out infinite reverse; }
+.flow-bridge-symbol { animation: flow-bridge-glow 4s ease-in-out infinite; }
+.flow-field .field-caption { font-size: 8px; opacity: .6; margin-top: 0; }
+@keyframes flow-float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+@keyframes flow-bridge-glow { 0%,100% { opacity: .5; } 50% { opacity: 1; } }
+@media(max-width:760px) { .flow-field { width: 43%; } }
 @media(max-width:600px) {
   .page-heading { flex-direction: column; align-items: stretch; gap: 0; }
-  .solid-field { display: block; width: min(100%, 290px); margin: 0 auto 18px; }
-  .solid-field .field-caption { font-size: 7px; padding-bottom: 0; }
+  .flow-field { display: block; width: 100%; max-width: 400px; margin: 0 auto 18px; }
+  .flow-field .field-caption { font-size: 7px; padding-bottom: 0; }
 }
-@media(prefers-reduced-motion:reduce) { .solid-tile, .solid-board, .solid-aura { animation: none; } }
+@media(prefers-reduced-motion:reduce) {
+  .flow-ethereum-main, .flow-ethereum-small, .flow-bridge-symbol { animation: none; }
+  .flow-particle { display: none; }
+}

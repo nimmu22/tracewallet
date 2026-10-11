@@ -1,5 +1,3 @@
-import type { CSSProperties } from "react";
-
 export function ChainMark({ size = 28 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 32 32" fill="none" aria-hidden="true">
@@ -9,53 +7,78 @@ export function ChainMark({ size = 28 }: { size?: number }) {
   );
 }
 
-const tiles = Array.from({ length: 5 }, (_, row) => row - 2).flatMap((r) =>
-  Array.from({ length: 5 }, (_, column) => column - 2)
-    .filter((q) => Math.abs(q + r) <= 2)
-    .map((q) => ({ q, r, distance: Math.max(Math.abs(q), Math.abs(r), Math.abs(q + r)) })),
-);
+function EthereumShape({ x, y, scale = 1, large = false }: { x: number; y: number; scale?: number; large?: boolean }) {
+  return (
+    <g transform={`translate(${x} ${y}) scale(${scale})`}>
+      <g className={large ? "flow-ethereum-main" : "flow-ethereum-small"}>
+        <ellipse cy="6" rx="43" ry="55" fill="url(#flow-node-glow)" />
+        <path d="M0-43 26 0 0 15-26 0Z" fill="url(#flow-eth-face)" />
+        <path d="M0-43V15L26 0Z" fill="var(--primary)" opacity=".45" />
+        <path d="M0 22 26 6 0 50-26 6Z" fill="url(#flow-eth-face)" />
+        <path d="M0 22V50L26 6Z" fill="var(--primary)" opacity=".3" />
+      </g>
+    </g>
+  );
+}
+const routes = [
+  { path: "M102 144 C154 144 198 144 241 144", duration: 3.4 },
+  { path: "M282 144 C336 144 345 65 420 65", duration: 4.1 },
+  { path: "M282 144 C340 144 382 144 456 144", duration: 3.2 },
+  { path: "M282 144 C340 144 356 225 420 225", duration: 4.5 },
+  { path: "M191 44 C229 44 262 86 262 119", duration: 3.7 },
+  { path: "M191 245 C229 245 262 199 262 168", duration: 4.2 },
+];
 
-// Solid faces, soft shading and CSS motion; this is decorative, not wallet data.
+// Only particles are drawn along the routes. The motion paths themselves are invisible.
+// This is a decorative illustration, not a live bridge or transaction graph.
 export function BlockchainField() {
   return (
-    <div className="blockchain-field solid-field" aria-hidden="true">
-      <div className="solid-stage">
-        <div className="solid-aura" />
-        <div className="solid-shadow" />
-        <div className="solid-board">
-          {tiles.map(({ q, r, distance }, i) => {
-            const tone = distance === 0 ? "mint" : distance === 1 ? (i % 2 ? "jade" : "mint") : "graphite";
-            const style = {
-              left: `${((230 + (q + r / 2) * 67 - 35) / 460) * 100}%`,
-              top: `${((150 + r * 57 - 37) / 320) * 100}%`,
-              "--tile-delay": `${-(q + r + 4) * .48}s`,
-              "--tile-lift": `${distance === 0 ? -22 : distance === 1 ? -15 : -9}px`,
-              zIndex: r + 4,
-            } as CSSProperties;
-            return (
-              <div key={`${q}:${r}`} className={`solid-tile solid-tile-${tone}`} style={style}>
-                <svg viewBox="0 0 80 96" fill="none">
-                  <defs>
-                    <linearGradient id={`tile-top-${i}`} x1="15" y1="3" x2="65" y2="78" gradientUnits="userSpaceOnUse">
-                      <stop stopColor="var(--tile-highlight)" />
-                      <stop offset="1" stopColor="var(--tile-color)" />
-                    </linearGradient>
-                    <linearGradient id={`tile-side-${i}`} x1="7" y1="65" x2="73" y2="92" gradientUnits="userSpaceOnUse">
-                      <stop stopColor="var(--tile-side)" />
-                      <stop offset="1" stopColor="var(--tile-depth)" />
-                    </linearGradient>
-                  </defs>
-                  <path d="M7 24 40 5 73 24V73L40 92 7 73Z" fill={`url(#tile-side-${i})`} />
-                  <path d="m40 80 33-19v12L40 92Z" fill="var(--tile-depth)" />
-                  <path d="M40 4 73 23V61L40 80 7 61V23Z" fill={`url(#tile-top-${i})`} />
-                  <path d="m40 4 33 19-33 19L7 23Z" fill="var(--tile-highlight)" opacity=".13" />
-                </svg>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-      <span className="field-caption mono">MULTI-CHAIN / ONE PERSPECTIVE</span>
+    <div className="blockchain-field flow-field" aria-hidden="true">
+      <svg viewBox="0 0 520 290" fill="none" className="flow-stage">
+        <defs>
+          <linearGradient id="flow-eth-face" x1="-26" y1="-43" x2="26" y2="50" gradientUnits="userSpaceOnUse">
+            <stop stopColor="var(--foreground)" stopOpacity=".95" />
+            <stop offset=".5" stopColor="var(--primary)" stopOpacity=".82" />
+            <stop offset="1" stopColor="var(--primary)" stopOpacity=".35" />
+          </linearGradient>
+          <radialGradient id="flow-node-glow">
+            <stop stopColor="var(--primary)" stopOpacity=".11" />
+            <stop offset="1" stopColor="var(--primary)" stopOpacity="0" />
+          </radialGradient>
+          <linearGradient id="flow-bridge-face" x1="0" y1="0" x2="1" y2="1">
+            <stop stopColor="var(--primary)" stopOpacity=".17" />
+            <stop offset="1" stopColor="var(--primary)" stopOpacity=".035" />
+          </linearGradient>
+        </defs>
+        <ellipse cx="262" cy="144" rx="130" ry="95" fill="url(#flow-node-glow)" />
+        <EthereumShape x={76} y={140} scale={1.05} large />
+        <EthereumShape x={438} y={63} scale={.4} />
+        <EthereumShape x={474} y={142} scale={.5} />
+        <EthereumShape x={438} y={224} scale={.4} />
+        <EthereumShape x={174} y={44} scale={.28} />
+        <EthereumShape x={174} y={244} scale={.28} />
+        <g transform="translate(262 144)">
+          <rect x="-23" y="-28" width="46" height="56" rx="15" fill="url(#flow-bridge-face)" />
+          <g className="flow-bridge-symbol" fill="var(--primary)">
+            <path d="M-13-9h11v5h-6v14h-5Z" opacity=".7" />
+            <path d="M13 9H2V4h6v-14h5Z" opacity=".9" />
+            <rect x="-5" y="-2" width="10" height="4" rx="2" />
+          </g>
+        </g>
+        {routes.flatMap(({ path, duration }, route) => [0, 1].map((packet) => (
+          <g className="flow-particle" key={`${route}-${packet}`}>
+            <animateMotion path={path} dur={`${duration}s`} begin={`${-(packet * duration / 2 + route * .3)}s`} repeatCount="indefinite" calcMode="paced" />
+            <circle r="7" fill="var(--primary)" opacity=".07" />
+            <circle r="3.5" fill="var(--primary)" opacity=".18" />
+            <circle r="1.65" fill="var(--primary)" />
+          </g>
+        )))}
+        <g fill="var(--muted-foreground)" fontFamily="monospace" fontSize="9" letterSpacing="1.8" textAnchor="middle">
+          <text x="76" y="216">ETHEREUM</text>
+          <text x="262" y="195">BRIDGE</text>
+        </g>
+      </svg>
+      <span className="field-caption mono">ILLUSTRATIVE NETWORK FLOW</span>
     </div>
   );
 }
