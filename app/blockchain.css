@@ -188,10 +188,9 @@ footer { padding: 28px 0; }
 .flow-stage { width: 100%; display: block; overflow: visible; }
 .flow-source-form { animation: flow-materialize 8s linear infinite; }
 @keyframes flow-materialize { 0%,100% { transform: scale(.78); } 7.5%,94% { transform: scale(1); } }
-.flow-label, .flow-address { fill: var(--muted-foreground); font-family: monospace; text-anchor: middle; }
-.flow-label { font-size: 9px; letter-spacing: 1.2px; }
-.flow-satellite-label { font-size: 8px; opacity: .6; letter-spacing: 1px; }
-.flow-address { font-size: 8px; letter-spacing: .5px; opacity: .65; }
+.flow-address { font-family: monospace; text-anchor: middle; }
+.flow-address { fill: #39ff14; font-size: 9px; letter-spacing: .6px; opacity: .65; }
+:root[data-theme="light"] .flow-address { fill: #176d0d; opacity: .85; }
 .flow-field .field-caption { font-size: 8px; opacity: .6; margin-top: 0; }
 @media(max-width:760px) { .flow-field { width: 46%; } }
 @media(max-width:600px) {
