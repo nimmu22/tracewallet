@@ -1,4 +1,3 @@
-[README.md](https://github.com/user-attachments/files/32593190/README.md)
 # CHAINTRACE
 
 A read-only dashboard for public wallet activity across EVM networks and Solana. It combines network history, wallet-paid transaction fees, recent transactions, and current crypto markets on one page. No wallet connection, private key, or seed phrase is needed.
@@ -13,14 +12,33 @@ cp .env.example .env.local
 npm run dev
 ```
 
-On Windows, use `Copy-Item .env.example .env.local` instead of `cp` if needed. Open the local URL printed by the server (normally http://localhost:5173).
+On Windows, use `Copy-Item .env.example .env.local` instead of `cp` if needed. Open the local URL printed by the server (normally http://localhost:3000).
 
 ```sh
 npx tsc --noEmit --incremental false
 npm run build
 ```
 
-The default build uses Vinext, a Vite implementation of the Next.js App Router, to emit a Cloudflare-compatible Worker and client assets. React 19, TypeScript, Tailwind 4, Framer Motion, Recharts, viem, and the starter's accessible Radix primitives power the interface. Charts are lazy-loaded. The clock updates independently of the dashboard.
+The application now uses Next.js App Router directly, with React, TypeScript, Tailwind, Framer Motion, Recharts and viem. Routes and page files are in `app/`; shared components and provider services remain in their original folders. The previous repository snapshot had no package manifest and its route files were at the root. This update restores a runnable Next.js project.
+
+## UI update
+
+The dashboard uses a graphite and cyan palette with a logo-only neon-green hero animation. Floating Bitcoin, Ethereum, BNB, TRON, Base and Solana marks have crisp red outlines (#ff334f), sharp mitered corners and a restrained green halo; no boxes, hexagonal housings, coin frames or chain-name labels surround them. Bitcoin sends a packet to a small unlabeled relay point, which splits toward the other logos and then to illustrative shortened addresses. Address endpoints are glowing dots rather than tiles. An eight-second timeline coordinates staggered arrivals, comet tails and small impact sparks. Logo fills and moving particles use hacker green (#39ff14); paths stay invisible. The illustration scales on mobile; reduced-motion settings retain static logos and address points and hide particles, dust and impact effects. It is decorative and does not add Bitcoin/TRON scanning or a live bridge feature. Open `/animation-preview.html` for the actual SVG animation; `/flow-preview.gif` is a rendered design preview. Wallet tracking, provider coverage, charts, pagination, market refresh, themes and counter behaviour are preserved.
+
+
+The top bar shows **Total views** from a shared Turso database. It counts every full page load or refresh, including repeat visits by the same person. It does not represent unique visitors or online users. One document load reuses its request across React Strict Mode mounts. No browser fingerprint or wallet address is stored by the counter. Database increments are atomic and retain the existing `tracewallet_page_views` table. Missing configuration or a provider failure displays Unavailable instead of a fabricated count.
+
+Set `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN` in Vercel environment settings, then redeploy. The route creates its single-row table if needed. Keep credentials server-only. If a previous deployment already used these variables, retain them to preserve its count. The legacy Cloudflare `db/` files are unused by this Vercel counter.
+
+Validation:
+
+```sh
+npm run typecheck
+npm run test:counter
+npm run build
+```
+
+The five counter tests verify origin rejection, missing configuration, atomic increment response, query failure and invalid response handling. They mock storage; a production total still needs configured Turso credentials. Visual browser QA and live provider/counter checks must be completed in an environment with browser access.
 
 ## What works
 
@@ -58,6 +76,8 @@ All credentials stay in server routes. Never prefix them with `NEXT_PUBLIC_`, `V
 | `ETHERSCAN_API_KEY` | Etherscan V2 history for BNB and Avalanche; chain access depends on plan. |
 | `ETHEREUM_RPC_URL` | Optional Ethereum mainnet RPC for ENS. Public endpoints are used by default. |
 | `SOLANA_RPC_URL` | Optional Solana RPC. Defaults to api.mainnet-beta.solana.com. |
+| `TURSO_DATABASE_URL` | Shared page-view database URL (`libsql://...` or `https://...`). |
+| `TURSO_AUTH_TOKEN` | Server-only token for the page-view database. |
 
 No keys are required for the five Blockscout integrations. If CoinGecko is blocked or throttled, current market data falls back to CoinPaprika and the footer changes attribution. Both sources rank the market dynamically. The native asset ID map only supports fee conversion; it does not define the top ten. The fallback uses symbol monograms when a provider supplies no logo URL.
 
@@ -96,26 +116,11 @@ The optional WebMCP tool `analyze_public_wallet` reuses the same scan handler. I
 
 Add an entry in `services/types.ts`, a provider adapter returning `ChainStats`, and register it in `services/index.ts`. Reuse `getEvmStats` for compatible Blockscout/Etherscan networks; otherwise normalize responses in a dedicated service. Supply a native token price ID and correct explorer URL. Preserve unknown values as `null` and declare whether returned history is partial. Never use an account nonce as a total transaction count.
 
-## Checks
-
-```sh
-npx tsc --noEmit --incremental false
-npm test
-npm run build
-```
-
-The accuracy checks cover address formats, duplicate hashes, incoming versus wallet-paid fees, reverted transactions, and incomplete-history first-activity behavior. Live provider access remains subject to upstream limits; deterministic tests do not assert current balances or prices.
-
 ## Deploying on Vercel
 
-The product uses portable Next.js App Router APIs. The included deployment configuration targets Sites/Cloudflare, while Vercel should use the installed Next.js runtime directly:
+Import the repository with the Next.js preset. Use the repository root as Root Directory, `npm run build` as Build Command, and leave Output Directory at its default. Use Node 22 or newer. API routes need a server; do not enable static export. Configure provider and counter variables from `.env.example`, then deploy.
 
-1. Import the repository into Vercel and choose the Next.js framework preset.
-2. Override the build command to `npx next build` and use the default Next.js output directory.
-3. Add the server environment variables above in Vercel project settings.
-4. Select a supported Node 22 runtime and deploy. Do not use a static export: API routes need a server.
-
-The Vite/Cloudflare build files are not used by `next build`. The existing `.openai/hosting.json` is Sites metadata and is not required by Vercel. Vercel deployment has not been exercised as part of the Sites build; verify provider access in that environment before making it public.
+Production deployment is not verified by the local build. Check wallet scans, market requests and the counter after deployment. Existing `scripts/` helpers from the older Sites setup are retained for history; the current package scripts use Next.js directly.
 
 ## Provider references
 
