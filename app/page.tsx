@@ -18,6 +18,8 @@ import {
   Moon,
   Activity,
   Copy,
+  ClipboardPaste,
+  X,
   Check,
   ExternalLink,
   Info,
@@ -155,6 +157,9 @@ export default function Home() {
   const [input, setInput] = useState(""),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
+  const [hasAnalyzed, setHasAnalyzed] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [clipboardError, setClipboardError] = useState("");
   const [wallet, setWallet] = useState<WalletProfile | null>(null),
     [chains, setChains] = useState<Record<string, ChainState>>({});
   const [market, setMarket] = useState<MarketData | null>(null),
@@ -196,6 +201,7 @@ export default function Home() {
     return () => clearTimeout(timer);
   }, [input]);
   useEffect(() => {
+    if (!hasAnalyzed) return;
     const controller = new AbortController();
     let inFlight = false;
     const refresh = async () => {
@@ -217,14 +223,14 @@ export default function Home() {
       }
     };
     void refresh();
-    const timer = setInterval(refresh, 60000);
+    const timer = setInterval(refresh, 10000);
     document.addEventListener("visibilitychange", refresh);
     return () => {
       controller.abort();
       clearInterval(timer);
       document.removeEventListener("visibilitychange", refresh);
     };
-  }, []);
+  }, [hasAnalyzed]);
   const analyze = useCallback(async (value: string) => {
     const trimmed = value.trim(),
       kind = addressKind(trimmed);
@@ -242,6 +248,8 @@ export default function Home() {
     setInput(trimmed);
     setError("");
     setBusy(true);
+    setHasAnalyzed(true);
+    setClipboardError("");
     setChains({});
     setWallet(null);
     setFilter("all");
@@ -448,6 +456,22 @@ export default function Home() {
     e.preventDefault();
     void analyze(input).catch(() => {});
   };
+  const paste = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      setInput(text.trim().slice(0, 255));
+      setClipboardError("");
+    } catch {
+      setClipboardError("Paste access is unavailable. Tap the input and use Ctrl+V or your phone’s Paste option.");
+    }
+    inputRef.current?.focus();
+  };
+  const clearAddress = () => {
+    setInput("");
+    setError("");
+    setClipboardError("");
+    inputRef.current?.focus();
+  };
   const copy = async () => {
     if (!wallet) return;
     try {
@@ -528,11 +552,13 @@ export default function Home() {
       <main className="workspace">
         <WalletHero />
         <form
+          id="wallet-search"
           className={"search-box" + (error ? " invalid" : "")}
           onSubmit={onSubmit}
         >
           <Search size={21} />
           <input
+            ref={inputRef}
             aria-label="Wallet address or ENS"
             aria-describedby={error ? "search-error" : undefined}
             aria-invalid={!!error}
@@ -545,7 +571,11 @@ export default function Home() {
             disabled={busy}
           />
           <span>EVM / SOL / ENS</span>
-          <button className="primary" disabled={busy}>
+          <div className="address-actions">
+            <button type="button" className="address-action" onClick={() => void paste()} disabled={busy} aria-label="Paste wallet address"><ClipboardPaste size={17} /><span>Paste</span></button>
+            <button type="button" className="address-action clear-address" onClick={clearAddress} disabled={busy || !input} aria-label="Clear wallet address"><X size={18} /></button>
+          </div>
+          <button type="submit" className="primary" disabled={busy}>
             {busy ? "Analyzing wallet" : "Analyze Wallet"}
             {busy ? (
               <RefreshCw className="spin" size={16} />
@@ -554,6 +584,7 @@ export default function Home() {
             )}
           </button>
         </form>
+        {clipboardError && <p className="clipboard-note" role="status">{clipboardError}</p>}
         {error && (
           <p id="search-error" className="inline-error" role="alert">
             <AlertCircle size={14} />
@@ -582,23 +613,25 @@ export default function Home() {
           <span>Public addresses only. No wallet connection needed.</span>
         </div>
         <nav className="section-nav" aria-label="Dashboard sections">
-          <a className="active" href="#overview">
+          <a className="active" href={hasAnalyzed ? "#overview" : "#wallet-search"}>
             <Wallet size={16} />
             Wallet overview
           </a>
-          <a href="#networks">
+          <a href={hasAnalyzed ? "#networks" : "#wallet-search"}>
             <Layers3 size={16} />
             Networks
           </a>
-          <a href="#recent">
+          <a href={hasAnalyzed ? "#recent" : "#wallet-search"}>
             <Activity size={16} />
             Activity
           </a>
-          <a href="#market">
+          <a href={hasAnalyzed ? "#market" : "#wallet-search"}>
             <Globe2 size={16} />
             Market
           </a>
         </nav>
+        {hasAnalyzed && (
+        <motion.div className="dashboard-results" initial={reduced ? false : { opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
         <section className="identity" id="overview">
           <div className="wallet-avatar">
             <Wallet />
@@ -1235,9 +1268,11 @@ export default function Home() {
                 {market?.source || "CoinGecko"} ↗
               </a>
             </span>
-            <span>Refreshes every 60 seconds</span>
+            <span>Refreshes every 10 seconds</span>
           </div>
         </section>
+        </motion.div>
+        )}
         <footer>
           <span className="brand">
             <ChainMark size={20} />

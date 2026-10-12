@@ -2,7 +2,7 @@ import { getMarket } from "@/services/prices";
 export async function GET() {
   try {
     return Response.json(await getMarket(), {
-      headers: { "Cache-Control": "public, max-age=30, s-maxage=60" },
+      headers: { "Cache-Control": "no-store" },
     });
   } catch (e) {
     console.warn(
