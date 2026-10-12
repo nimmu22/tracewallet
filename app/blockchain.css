@@ -268,3 +268,28 @@ footer { padding: 28px 0; }
 .flow-block-cutout { display: none; }
 .flow-field[data-flow-style="blocks"] .flow-block-cutout { display: inline; }
 .flow-field[data-flow-lines="hidden"] .flow-routes { display: none; }
+
+/* Full-width decorative header background. The copy sits above a soft shade. */
+.hero-backdrop { isolation: isolate; min-height: 360px; aspect-ratio: 1120 / 360; overflow: hidden; }
+.hero-backdrop > div.hero-copy { position: relative; z-index: 2; flex: none; width: 56%; padding: 48px 0; }
+.hero-backdrop::after {
+  content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--background) 84%, transparent) 0%, color-mix(in srgb, var(--background) 76%, transparent) 30%, color-mix(in srgb, var(--background) 24%, transparent) 56%, transparent 76%);
+}
+.hero-backdrop > .flow-background {
+  position: absolute; inset: 0 -40px; z-index: 0; pointer-events: none;
+  display: flex; align-items: center; width: calc(100% + 80px); max-width: none; height: 100%; margin: 0; opacity: .88;
+}
+.hero-backdrop .flow-stage { flex-shrink: 0; }
+.flow-background .field-caption { display: none; }
+@media(max-width:760px) {
+  .hero-backdrop { min-height: 340px; aspect-ratio: auto; }
+  .hero-backdrop > div.hero-copy { width: 78%; padding: 40px 0; }
+  .hero-backdrop > .flow-background { inset-inline: -100px; width: calc(100% + 200px); }
+}
+@media(max-width:600px) {
+  .hero-backdrop { min-height: 320px; flex-direction: row; }
+  .hero-backdrop > div.hero-copy { width: 100%; padding: 36px 0; }
+  .hero-backdrop > .flow-background { width: 940px; left: 50%; right: auto; transform: translateX(-50%); opacity: .65; }
+  .hero-backdrop::after { background: linear-gradient(90deg, color-mix(in srgb, var(--background) 88%, transparent), color-mix(in srgb, var(--background) 72%, transparent)); }
+}

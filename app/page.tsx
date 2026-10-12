@@ -14,7 +14,6 @@ import {
   Wallet,
   Layers3,
   Globe2,
-  ShieldCheck,
   Sun,
   Moon,
   Activity,
@@ -52,7 +51,8 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { Opening, LiveClock } from "@/components/chaintrace/ambient";
-import { ChainMark, BlockchainField } from "@/components/chaintrace/blockchain-field";
+import { ChainMark } from "@/components/chaintrace/blockchain-field";
+import { WalletHero } from "@/components/chaintrace/wallet-hero";
 import PageViewCounter from "@/components/page-view-counter";
 import {
   networks,
@@ -525,18 +525,7 @@ export default function Home() {
         </div>
       </header>
       <main className="workspace">
-        <div className="page-heading">
-          <div>
-            <div className="eyebrow">ON-CHAIN EXPLORER</div>
-            <h1>Follow the wallet.<br /><span>See the chain.</span></h1>
-            <p>Public wallet activity, network history and gas spending.<br className="hero-break" /> One address. A clearer view of the blockchain.</p>
-            <div className="hero-signals">
-              <span><Layers3 size={13} /> EVM + Solana</span>
-              <span><ShieldCheck size={13} /> Read-only by design</span>
-            </div>
-          </div>
-          <BlockchainField />
-        </div>
+        <WalletHero />
         <form
           className={"search-box" + (error ? " invalid" : "")}
           onSubmit={onSubmit}

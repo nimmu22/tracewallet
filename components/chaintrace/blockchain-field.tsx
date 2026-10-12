@@ -147,24 +147,38 @@ const journeys: { points: Point[]; start: number; end: number }[] = [
   { points: [[508,284],[538,284],[538,326],[586,326]], start: 6.45, end: 7.3 },
 ];
 
+// Spread node positions, rather than stretching the logo artwork or packet shapes.
+const wideX = (x: number) => Math.round(20 + (x - 20) * 1.78);
+const wideChainNodes = chainNodes.map(node => ({ ...node, x: wideX(node.x) }));
+const wideAddresses = addresses.map(node => ({ ...node, x: wideX(node.x) }));
+const wideJourneys = journeys.map(journey => ({
+  ...journey,
+  points: journey.points.map(([x, y]): Point => [wideX(x), y]),
+}));
+
 // Theme-aware decorative flow; Bitcoin/TRON logos do not add wallet-scanning support.
 // Connectors sit behind the nodes; masks keep lines out of logos and address points.
-export function BlockchainField() {
-  return <div className="blockchain-field flow-field" aria-hidden="true">
-    <svg viewBox="0 0 640 360" fill="none" className="flow-stage">
+export function BlockchainField({ background = false }: { background?: boolean }) {
+  const nodes = background ? wideChainNodes : chainNodes;
+  const wallets = background ? wideAddresses : addresses;
+  const routes = background ? wideJourneys : journeys;
+  const width = background ? 1120 : 640;
+  const relayX = background ? wideX(508) : 508;
+  return <div className={"blockchain-field flow-field" + (background ? " flow-background" : "")} aria-hidden="true">
+    <svg viewBox={`0 0 ${width} 360`} fill="none" className="flow-stage">
       <defs>
-        <mask id="flow-route-mask" maskUnits="userSpaceOnUse" x="0" y="0" width="640" height="360">
-          <rect width="640" height="360" fill="white" />
-          {chainNodes.map(node => <g key={`${node.x}-${node.y}`} transform={`translate(${node.x} ${node.y})`}>
+        <mask id="flow-route-mask" maskUnits="userSpaceOnUse" x="0" y="0" width={width} height="360">
+          <rect width={width} height="360" fill="white" />
+          {nodes.map(node => <g key={`${node.x}-${node.y}`} transform={`translate(${node.x} ${node.y})`}>
             <circle r={node.source ? 24 : node.satellite ? 16 : 22} fill="black" />
             <rect className="flow-block-cutout" x="-28" y="-28" width="56" height="56" rx="4" fill="black" />
           </g>)}
-          {addresses.map(node => <g key={node.label} transform={`translate(${node.x} ${node.y})`}>
+          {wallets.map(node => <g key={node.label} transform={`translate(${node.x} ${node.y})`}>
             <circle r="6" fill="black" />
             <rect className="flow-block-cutout" x="-35" y="-13" width="70" height="44" rx="4" fill="black" />
           </g>)}
-          <circle cx="508" cy="78" r="6" fill="black" />
-          <circle cx="508" cy="284" r="6" fill="black" />
+          <circle cx={relayX} cy="78" r="6" fill="black" />
+          <circle cx={relayX} cy="284" r="6" fill="black" />
         </mask>
         <filter id="flow-neon" x="-100%" y="-100%" width="300%" height="300%" colorInterpolationFilters="sRGB">
           <feGaussianBlur in="SourceAlpha" stdDeviation=".9" result="soft-edge" />
@@ -182,20 +196,20 @@ export function BlockchainField() {
           <stop offset="1" stopColor="currentColor" stopOpacity="0" />
         </radialGradient>
       </defs>
-      <ellipse cx="330" cy="180" rx="280" ry="165" fill="url(#flow-ambient)" />
+      <ellipse cx={width / 2} cy="180" rx={width * .44} ry="165" fill="url(#flow-ambient)" />
       <g className="flow-dust">
-        {Array.from({ length: 16 }, (_, i) => <circle key={i} cx={95 + (i * 71) % 460} cy={18 + (i * 47) % 286} r={i % 4 === 0 ? 1.2 : .65} fill="currentColor" opacity=".1">
+        {Array.from({ length: 16 }, (_, i) => <circle key={i} cx={background ? wideX(95 + (i * 71) % 460) : 95 + (i * 71) % 460} cy={18 + (i * 47) % 286} r={i % 4 === 0 ? 1.2 : .65} fill="currentColor" opacity=".1">
           <animate attributeName="opacity" values=".025;.16;.025" keyTimes="0;.5;1" dur={`${4 + i % 4}s`} begin={`${-i * .4}s`} repeatCount="indefinite" />
         </circle>)}
       </g>
       <g className="flow-routes" mask="url(#flow-route-mask)">
-        {journeys.map((journey, i) => <path key={i} d={route(journey.points)} />)}
+        {routes.map((journey, i) => <path key={i} d={route(journey.points)} />)}
       </g>
-      {chainNodes.map(node => <ChainNode key={`${node.x}-${node.y}`} {...node} />)}
-      {addresses.map(node => <AddressNode key={node.label} {...node} />)}
-      <RelayNode x={508} y={78} at={5.55} />
-      <RelayNode x={508} y={284} at={6.25} />
-      {journeys.map((journey, i) => <Packet key={i} path={route(journey.points)} start={journey.start} end={journey.end} />)}
+      {nodes.map(node => <ChainNode key={`${node.x}-${node.y}`} {...node} />)}
+      {wallets.map(node => <AddressNode key={node.label} {...node} />)}
+      <RelayNode x={relayX} y={78} at={5.55} />
+      <RelayNode x={relayX} y={284} at={6.25} />
+      {routes.map((journey, i) => <Packet key={i} path={route(journey.points)} start={journey.start} end={journey.end} />)}
     </svg>
     <span className="field-caption mono">ILLUSTRATIVE MULTICHAIN FLOW</span>
   </div>;
