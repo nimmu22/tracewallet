@@ -1721,12 +1721,14 @@ footer { padding: 28px 0; }
   --flow-core: #e9ffe3;
   --flow-glow: #39ff14; --flow-glow-opacity: .45;
   --flow-address-opacity: .65; --flow-source-rest: .78;
+  --flow-box-fill: #292313; --flow-box-border: #e5c76d; --flow-box-opacity: .9;
 }
 :root[data-theme="light"] {
   --flow-ink: #087f6d;
   --flow-core: #e8fff7;
   --flow-glow: #149f8a; --flow-glow-opacity: .12;
   --flow-address-opacity: 1; --flow-source-rest: .92;
+  --flow-box-fill: #fff4cf; --flow-box-border: #c69c3a; --flow-box-opacity: .96;
 }
 .flow-stage { width: 100%; display: block; overflow: visible; color: var(--flow-ink); }
 .flow-core { fill: var(--flow-core); }
@@ -1790,7 +1792,7 @@ footer { padding: 28px 0; }
 :root[data-theme="light"] .network-icon.n7 { color: #207d61; background: #e8f4ed; }
 
 /* Optional block housings are exposed in the design preview for comparison. */
-.flow-node-frame { display: none; fill: var(--card); fill-opacity: .88; stroke: currentColor; stroke-width: .7; stroke-opacity: .25; }
+.flow-node-frame { display: none; fill: var(--flow-box-fill); fill-opacity: var(--flow-box-opacity); stroke: var(--flow-box-border); stroke-width: .8; stroke-opacity: .65; }
 .flow-field[data-flow-style="blocks"] .flow-node-frame { display: block; }
 
 .flow-routes { fill: none; stroke: var(--flow-ink); stroke-width: .9; stroke-linecap: round; stroke-linejoin: round; opacity: .28; }
