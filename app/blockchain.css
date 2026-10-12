@@ -339,3 +339,35 @@ footer { padding: 28px 0; }
   .workspace .section-nav { gap: 0; }
   .workspace .section-nav a { padding: 10px; }
 }
+
+/* Restore the spacious dashboard with solid dark panels and a wider search. */
+.workspace { width: 100%; max-width: none; padding-left: 24px; padding-right: 24px; }
+.topbar { padding-left: 24px; padding-right: 24px; }
+.wallet-intro { grid-template-columns: minmax(280px, .7fr) minmax(0, 1.7fr); min-height: 200px; }
+.wallet-intro h1 { font-size: clamp(32px, 3vw, 44px); }
+.header-flow { height: 180px; }
+.header-flow .flow-stage { color: var(--primary); }
+.flow-mirror .flow-address { transform: scaleX(-1); transform-box: fill-box; transform-origin: center; }
+.workspace :is(.stat, .panel, .network-card, .gas-details, .scan-panel, .section-nav, .transaction-mobile) { border-radius: 12px; }
+.workspace .search-box { background: var(--card); border-color: var(--border); border-radius: 12px; }
+.address-action { border-color: var(--border); border-radius: 8px; }
+.workspace .stat { min-height: 160px; padding: 25px; }
+.workspace .network-card { min-height: 240px; padding: 24px; }
+.workspace .stat strong { font-size: 34px; }
+.workspace .network-total { font-size: 30px; }
+.workspace :is(.stats-grid, .network-grid) { gap: 18px; }
+.workspace .section-nav { border-radius: 10px; }
+.workspace .section-nav a { border-radius: 6px; }
+@media(max-width:760px) {
+  .wallet-intro { grid-template-columns: 1fr; gap: 8px; min-height: 0; padding: 22px 0 16px; }
+  .header-flow { height: 145px; }
+}
+@media(max-width:600px) {
+  .workspace, .topbar { padding-left: 14px; padding-right: 14px; }
+  .wallet-intro h1 { font-size: 30px; }
+  .header-flow { height: 110px; }
+  .workspace .stat { min-height: 145px; padding: 19px 16px; }
+  .workspace .stat strong { font-size: 28px; }
+  .workspace .network-card { min-height: 225px; padding: 22px; }
+  .workspace :is(.stats-grid, .network-grid) { gap: 12px; }
+}

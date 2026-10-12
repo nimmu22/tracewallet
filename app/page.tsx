@@ -157,7 +157,6 @@ export default function Home() {
   const [input, setInput] = useState(""),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
-  const [hasAnalyzed, setHasAnalyzed] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const [clipboardError, setClipboardError] = useState("");
   const [wallet, setWallet] = useState<WalletProfile | null>(null),
@@ -201,7 +200,6 @@ export default function Home() {
     return () => clearTimeout(timer);
   }, [input]);
   useEffect(() => {
-    if (!hasAnalyzed) return;
     const controller = new AbortController();
     let inFlight = false;
     const refresh = async () => {
@@ -230,7 +228,7 @@ export default function Home() {
       clearInterval(timer);
       document.removeEventListener("visibilitychange", refresh);
     };
-  }, [hasAnalyzed]);
+  }, []);
   const analyze = useCallback(async (value: string) => {
     const trimmed = value.trim(),
       kind = addressKind(trimmed);
@@ -248,7 +246,6 @@ export default function Home() {
     setInput(trimmed);
     setError("");
     setBusy(true);
-    setHasAnalyzed(true);
     setClipboardError("");
     setChains({});
     setWallet(null);
@@ -612,24 +609,23 @@ export default function Home() {
           <span>Public addresses only. No wallet connection needed.</span>
         </div>
         <nav className="section-nav" aria-label="Dashboard sections">
-          <a className="active" href={hasAnalyzed ? "#overview" : "#wallet-search"}>
+          <a className="active" href="#overview">
             <Wallet size={16} />
             Wallet overview
           </a>
-          <a href={hasAnalyzed ? "#networks" : "#wallet-search"}>
+          <a href="#networks">
             <Layers3 size={16} />
             Networks
           </a>
-          <a href={hasAnalyzed ? "#recent" : "#wallet-search"}>
+          <a href="#recent">
             <Activity size={16} />
             Activity
           </a>
-          <a href={hasAnalyzed ? "#market" : "#wallet-search"}>
+          <a href="#market">
             <Globe2 size={16} />
             Market
           </a>
         </nav>
-        {hasAnalyzed && (
         <motion.div className="dashboard-results" initial={reduced ? false : { opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
         <section className="identity" id="overview">
           <div className="wallet-avatar">
@@ -1271,7 +1267,6 @@ export default function Home() {
           </div>
         </section>
         </motion.div>
-        )}
         <footer>
           <span className="brand">
             <ChainMark size={20} />

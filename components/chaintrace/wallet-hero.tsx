@@ -8,7 +8,7 @@ export function WalletHero() {
         <p>Public wallet activity, network history and gas spending.</p>
       </div>
       <div className="header-flow" aria-hidden="true">
-        <BlockchainField background nodeStyle="blocks" />
+        <BlockchainField background twoSided nodeStyle="logos" />
       </div>
     </section>
   );
