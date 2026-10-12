@@ -155,20 +155,31 @@ const wideJourneys = journeys.map(journey => ({
   ...journey,
   points: journey.points.map(([x, y]): Point => [wideX(x), y]),
 }));
+const pageY = (y: number) => Math.round(24 + (y - 24) * 1.95);
+const pageChainNodes = wideChainNodes.map(node => ({ ...node, y: pageY(node.y) }));
+const pageAddresses = wideAddresses.map(node => ({ ...node, y: pageY(node.y) }));
+const pageJourneys = wideJourneys.map(journey => ({
+  ...journey,
+  points: journey.points.map(([x, y]): Point => [x, pageY(y)]),
+}));
 
 // Theme-aware decorative flow; Bitcoin/TRON logos do not add wallet-scanning support.
 // Connectors sit behind the nodes; masks keep lines out of logos and address points.
-export function BlockchainField({ background = false }: { background?: boolean }) {
-  const nodes = background ? wideChainNodes : chainNodes;
-  const wallets = background ? wideAddresses : addresses;
-  const routes = background ? wideJourneys : journeys;
-  const width = background ? 1120 : 640;
-  const relayX = background ? wideX(508) : 508;
-  return <div className={"blockchain-field flow-field" + (background ? " flow-background" : "")} aria-hidden="true">
-    <svg viewBox={`0 0 ${width} 360`} fill="none" className="flow-stage">
+export function BlockchainField({ background = false, fullPage = false, nodeStyle = "logos" }: { background?: boolean; fullPage?: boolean; nodeStyle?: "logos" | "blocks" }) {
+  const wide = background || fullPage;
+  const nodes = fullPage ? pageChainNodes : wide ? wideChainNodes : chainNodes;
+  const wallets = fullPage ? pageAddresses : wide ? wideAddresses : addresses;
+  const routes = fullPage ? pageJourneys : wide ? wideJourneys : journeys;
+  const width = wide ? 1120 : 640;
+  const height = fullPage ? 720 : 360;
+  const relayX = wide ? wideX(508) : 508;
+  const relayTop = fullPage ? pageY(78) : 78;
+  const relayBottom = fullPage ? pageY(284) : 284;
+  return <div className={"blockchain-field flow-field" + (wide ? " flow-background" : "")} data-flow-style={nodeStyle} aria-hidden="true">
+    <svg viewBox={`0 0 ${width} ${height}`} fill="none" className="flow-stage">
       <defs>
-        <mask id="flow-route-mask" maskUnits="userSpaceOnUse" x="0" y="0" width={width} height="360">
-          <rect width={width} height="360" fill="white" />
+        <mask id="flow-route-mask" maskUnits="userSpaceOnUse" x="0" y="0" width={width} height={height}>
+          <rect width={width} height={height} fill="white" />
           {nodes.map(node => <g key={`${node.x}-${node.y}`} transform={`translate(${node.x} ${node.y})`}>
             <circle r={node.source ? 24 : node.satellite ? 16 : 22} fill="black" />
             <rect className="flow-block-cutout" x="-28" y="-28" width="56" height="56" rx="4" fill="black" />
@@ -177,8 +188,8 @@ export function BlockchainField({ background = false }: { background?: boolean }
             <circle r="6" fill="black" />
             <rect className="flow-block-cutout" x="-35" y="-13" width="70" height="44" rx="4" fill="black" />
           </g>)}
-          <circle cx={relayX} cy="78" r="6" fill="black" />
-          <circle cx={relayX} cy="284" r="6" fill="black" />
+          <circle cx={relayX} cy={relayTop} r="6" fill="black" />
+          <circle cx={relayX} cy={relayBottom} r="6" fill="black" />
         </mask>
         <filter id="flow-neon" x="-100%" y="-100%" width="300%" height="300%" colorInterpolationFilters="sRGB">
           <feGaussianBlur in="SourceAlpha" stdDeviation=".9" result="soft-edge" />
@@ -196,9 +207,9 @@ export function BlockchainField({ background = false }: { background?: boolean }
           <stop offset="1" stopColor="currentColor" stopOpacity="0" />
         </radialGradient>
       </defs>
-      <ellipse cx={width / 2} cy="180" rx={width * .44} ry="165" fill="url(#flow-ambient)" />
+      <ellipse cx={width / 2} cy={height / 2} rx={width * .44} ry={height * .46} fill="url(#flow-ambient)" />
       <g className="flow-dust">
-        {Array.from({ length: 16 }, (_, i) => <circle key={i} cx={background ? wideX(95 + (i * 71) % 460) : 95 + (i * 71) % 460} cy={18 + (i * 47) % 286} r={i % 4 === 0 ? 1.2 : .65} fill="currentColor" opacity=".1">
+        {Array.from({ length: 16 }, (_, i) => <circle key={i} cx={wide ? wideX(95 + (i * 71) % 460) : 95 + (i * 71) % 460} cy={fullPage ? pageY(18 + (i * 47) % 286) : 18 + (i * 47) % 286} r={i % 4 === 0 ? 1.2 : .65} fill="currentColor" opacity=".1">
           <animate attributeName="opacity" values=".025;.16;.025" keyTimes="0;.5;1" dur={`${4 + i % 4}s`} begin={`${-i * .4}s`} repeatCount="indefinite" />
         </circle>)}
       </g>
@@ -207,8 +218,8 @@ export function BlockchainField({ background = false }: { background?: boolean }
       </g>
       {nodes.map(node => <ChainNode key={`${node.x}-${node.y}`} {...node} />)}
       {wallets.map(node => <AddressNode key={node.label} {...node} />)}
-      <RelayNode x={relayX} y={78} at={5.55} />
-      <RelayNode x={relayX} y={284} at={6.25} />
+      <RelayNode x={relayX} y={relayTop} at={5.55} />
+      <RelayNode x={relayX} y={relayBottom} at={6.25} />
       {routes.map((journey, i) => <Packet key={i} path={route(journey.points)} start={journey.start} end={journey.end} />)}
     </svg>
     <span className="field-caption mono">ILLUSTRATIVE MULTICHAIN FLOW</span>

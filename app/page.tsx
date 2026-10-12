@@ -52,7 +52,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { Opening, LiveClock } from "@/components/chaintrace/ambient";
 import { ChainMark } from "@/components/chaintrace/blockchain-field";
-import { WalletHero } from "@/components/chaintrace/wallet-hero";
+import { WalletHero, WalletBackground } from "@/components/chaintrace/wallet-hero";
 import PageViewCounter from "@/components/page-view-counter";
 import {
   networks,
@@ -502,6 +502,7 @@ export default function Home() {
   return (
     <TooltipProvider delayDuration={150}>
       <Opening />
+      <WalletBackground />
       <header className="topbar">
         <a className="brand" href="#">
           <ChainMark />
