@@ -1,3 +1,5 @@
+import { chainLogos } from "./chain-logos";
+
 export function ChainMark({ size = 28 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 32 32" fill="none" aria-hidden="true">
@@ -11,25 +13,8 @@ const cycle = "8s";
 type Chain = "btc" | "eth" | "bnb" | "tron" | "base" | "sol";
 
 function ChainSymbol({ chain }: { chain: Chain }) {
-  if (chain === "btc") return <g fill="currentColor" transform="rotate(12)">
-    <path d="M-11-13H0C10-13 13-8 9-2C16 3 12 14 1 14H-11V9H-7V-8H-11ZM-2-8V-2H1C6-2 6-8 1-8ZM-2 2V9H2C8 9 8 2 2 2Z" fillRule="evenodd" />
-    <path d="M-3-19H0V-12H-3ZM3-19H6V-12H3ZM-3 13H0V20H-3ZM3 13H6V20H3Z" />
-  </g>;
-  if (chain === "eth") return <g>
-    <path d="M0-20 12 0 0 7-12 0Z" fill="currentColor" />
-    <path d="M0-20V7L12 0Z" className="flow-facet" stroke="none" fill="#d7ffcc" opacity=".45" />
-    <path d="M0 11 12 4 0 24-12 4Z" fill="currentColor" opacity=".8" />
-  </g>;
-  if (chain === "bnb") return <g fill="currentColor">
-    <path d="m0-21 10 10-5 5-5-5-5 5-5-5ZM-21 0l5-5 5 5-5 5ZM21 0l-5-5-5 5 5 5ZM0 21l10-10-5-5-5 5-5-5-5 5Z" />
-    <path d="m0-5 5 5-5 5-5-5Z" />
-  </g>;
-  if (chain === "base") return <path fill="currentColor" d="M-20-2a20 20 0 1 1 0 4H6V-2Z" />;
-  if (chain === "sol") return <path fill="currentColor" d="m-12-16 27 0-6 7h-27Zm-6 13h27l6 7h-27Zm6 13h27l-6 7h-27Z" />;
-  return <g fill="currentColor">
-    <path d="M-18-17 20-9 1 25Zm5 5L1 17l3-21Z" fillRule="evenodd" />
-    <path d="m-13-12 17 8 11-4ZM4-4 1 17 15-8Z" stroke="none" opacity=".35" />
-  </g>;
+  // Embed the original assets so the standalone preview also works offline.
+  return <image href={chainLogos[chain]} x="-21" y="-21" width="42" height="42" preserveAspectRatio="xMidYMid meet" />;
 }
 
 function Impact({ at, small = false }: { at: number; small?: boolean }) {
@@ -61,11 +46,9 @@ function ChainNode({ x, y, chain, satellite = false, source = false, at = 4.4 }:
   return <g transform={`translate(${x} ${y})`} className="flow-chain">
     <rect className="flow-node-frame" x="-27" y="-27" width="54" height="54" rx="4" />
     <Impact at={at} small={satellite} />
-    <g transform={`scale(${satellite ? .54 : source ? .8 : .66})`}>
-      <g className={"flow-glyph" + (source ? " flow-source-form" : "")} filter="url(#flow-neon)">
-        <g className="flow-symbols" stroke="#ff334f" strokeWidth="1.3" strokeLinejoin="miter" strokeMiterlimit="4" paintOrder="fill stroke">
-          <ChainSymbol chain={chain} />
-        </g>
+    <g transform={`scale(${satellite ? .7 : source ? 1 : .85})`}>
+      <g className={"flow-glyph" + (source ? " flow-source-form" : "")}>
+        <ChainSymbol chain={chain} />
       </g>
     </g>
   </g>;
