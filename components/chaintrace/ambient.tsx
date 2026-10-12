@@ -66,22 +66,14 @@ export function Opening() {
                 }}
                 transition={{ duration: 1.5, delay: i * 0.06 }}
               >
-                <motion.line
-                  x1={200}
-                  y1={90}
-                  x2={x}
-                  y2={y}
-                  stroke="#40506d"
-                  strokeWidth={1}
-                />
-                <rect x={x - 3} y={y - 3} width={6} height={6} fill="#799cff" />
+                <circle cx={x} cy={y} r={2.2} fill="currentColor" />
               </motion.g>
             ))}
             <motion.circle
               cx={200}
               cy={90}
               r={3}
-              fill="#8babff"
+              fill="currentColor"
               animate={{ scale: [0, 1, 1, 0] }}
               transition={{ duration: 1.8 }}
             />
