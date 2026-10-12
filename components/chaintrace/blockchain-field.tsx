@@ -8,7 +8,6 @@ export function ChainMark({ size = 28 }: { size?: number }) {
 }
 
 const cycle = "8s";
-const neon = "#39ff14";
 type Chain = "btc" | "eth" | "bnb" | "tron" | "base" | "sol";
 
 function ChainSymbol({ chain }: { chain: Chain }) {
@@ -18,7 +17,7 @@ function ChainSymbol({ chain }: { chain: Chain }) {
   </g>;
   if (chain === "eth") return <g>
     <path d="M0-20 12 0 0 7-12 0Z" fill="currentColor" />
-    <path d="M0-20V7L12 0Z" stroke="none" fill="#d7ffcc" opacity=".45" />
+    <path d="M0-20V7L12 0Z" className="flow-facet" stroke="none" fill="#d7ffcc" opacity=".45" />
     <path d="M0 11 12 4 0 24-12 4Z" fill="currentColor" opacity=".8" />
   </g>;
   if (chain === "bnb") return <g fill="currentColor">
@@ -49,7 +48,7 @@ function Impact({ at, small = false }: { at: number; small?: boolean }) {
       const distance = small ? 24 : 42 + (i % 3) * 6;
       const x = Math.cos(angle) * distance;
       const y = Math.sin(angle) * distance;
-      return <circle key={i} r={i % 2 ? .8 : 1.3} fill={neon} opacity="0">
+      return <circle key={i} r={i % 2 ? .8 : 1.3} fill="currentColor" opacity="0">
         <animate attributeName="cx" values={`0;0;${x * .32};${x};${x}`} keyTimes={times} dur={cycle} repeatCount="indefinite" />
         <animate attributeName="cy" values={`0;0;${y * .32};${y};${y}`} keyTimes={times} dur={cycle} repeatCount="indefinite" />
         <animate attributeName="opacity" values="0;0;.8;0;0" keyTimes={times} dur={cycle} repeatCount="indefinite" />
@@ -59,11 +58,11 @@ function Impact({ at, small = false }: { at: number; small?: boolean }) {
 }
 
 function ChainNode({ x, y, chain, satellite = false, source = false, at = 4.4 }: { x: number; y: number; chain: Chain; satellite?: boolean; source?: boolean; at?: number }) {
-  return <g transform={`translate(${x} ${y})`} color={neon}>
+  return <g transform={`translate(${x} ${y})`} className="flow-chain">
     <Impact at={at} small={satellite} />
     <g transform={`scale(${satellite ? .57 : source ? .9 : .78})`}>
-      <g className={source ? "flow-source-form" : undefined} filter="url(#flow-neon)">
-        <g stroke="#ff334f" strokeWidth="1.3" strokeLinejoin="miter" strokeMiterlimit="4" paintOrder="fill stroke">
+      <g className={"flow-glyph" + (source ? " flow-source-form" : "")} filter="url(#flow-neon)">
+        <g className="flow-symbols" stroke="#ff334f" strokeWidth="1.3" strokeLinejoin="miter" strokeMiterlimit="4" paintOrder="fill stroke">
           <ChainSymbol chain={chain} />
         </g>
       </g>
@@ -75,7 +74,7 @@ function AddressNode({ x, y, label, at = 6.6 }: { x: number; y: number; label: s
   return <g transform={`translate(${x} ${y})`}>
     <Impact at={at} small />
     <circle r="12" fill="url(#flow-halo)" opacity=".65" />
-    <circle r="2.2" fill={neon} filter="url(#flow-neon)" />
+    <circle r="2.2" fill="currentColor" filter="url(#flow-neon)" />
     <text y="20" className="flow-address">{label}</text>
   </g>;
 }
@@ -83,17 +82,17 @@ function AddressNode({ x, y, label, at = 6.6 }: { x: number; y: number; label: s
 function Packet({ path, start, end }: { path: string; start: number; end: number }) {
   const a = start / 8;
   const b = end / 8;
-  return <g className="flow-particle" opacity="0" fill={neon}>
+  return <g className="flow-particle" opacity="0" fill="currentColor">
     <animateMotion path={path} rotate="auto" calcMode="linear" keyPoints="0;0;1;1" keyTimes={`0;${a};${b};1`} dur={cycle} repeatCount="indefinite" />
     <animate attributeName="opacity" values="0;1;0;0" keyTimes={`0;${a};${b};1`} calcMode="discrete" dur={cycle} repeatCount="indefinite" />
     <circle r="15" fill="url(#flow-halo)" />
     {[0, 1, 2, 3, 4].map(i => <circle key={i} cx={-(i + 1) * 5} r={1.7 - i * .3} opacity={.4 - i * .08} />)}
     <circle r="2.2" filter="url(#flow-neon)" />
-    <circle r=".8" fill="#e9ffe3" />
+    <circle r=".8" className="flow-core" fill="#e9ffe3" />
   </g>;
 }
 
-// Decorative neon flow; Bitcoin/TRON logos do not add wallet-scanning support.
+// Theme-aware decorative flow; Bitcoin/TRON logos do not add wallet-scanning support.
 // The motion paths are invisible. Only logos, address points and packets are drawn.
 export function BlockchainField() {
   return <div className="blockchain-field flow-field" aria-hidden="true">
@@ -101,23 +100,23 @@ export function BlockchainField() {
       <defs>
         <filter id="flow-neon" x="-100%" y="-100%" width="300%" height="300%" colorInterpolationFilters="sRGB">
           <feGaussianBlur in="SourceAlpha" stdDeviation=".9" result="soft-edge" />
-          <feFlood floodColor={neon} floodOpacity=".45" result="green" />
+          <feFlood className="flow-bloom" floodColor="#39ff14" floodOpacity=".45" result="green" />
           <feComposite in="green" in2="soft-edge" operator="in" result="bloom" />
           <feMerge><feMergeNode in="bloom" /><feMergeNode in="SourceGraphic" /></feMerge>
         </filter>
         <radialGradient id="flow-halo">
-          <stop stopColor={neon} stopOpacity=".3" />
-          <stop offset=".42" stopColor={neon} stopOpacity=".075" />
-          <stop offset="1" stopColor={neon} stopOpacity="0" />
+          <stop stopColor="currentColor" stopOpacity=".3" />
+          <stop offset=".42" stopColor="currentColor" stopOpacity=".075" />
+          <stop offset="1" stopColor="currentColor" stopOpacity="0" />
         </radialGradient>
         <radialGradient id="flow-ambient">
-          <stop stopColor={neon} stopOpacity=".045" />
-          <stop offset="1" stopColor={neon} stopOpacity="0" />
+          <stop stopColor="currentColor" stopOpacity=".045" />
+          <stop offset="1" stopColor="currentColor" stopOpacity="0" />
         </radialGradient>
       </defs>
       <ellipse cx="300" cy="160" rx="260" ry="160" fill="url(#flow-ambient)" />
       <g className="flow-dust">
-        {Array.from({ length: 16 }, (_, i) => <circle key={i} cx={95 + (i * 71) % 460} cy={18 + (i * 47) % 286} r={i % 4 === 0 ? 1.2 : .65} fill={neon} opacity=".1">
+        {Array.from({ length: 16 }, (_, i) => <circle key={i} cx={95 + (i * 71) % 460} cy={18 + (i * 47) % 286} r={i % 4 === 0 ? 1.2 : .65} fill="currentColor" opacity=".1">
           <animate attributeName="opacity" values=".025;.16;.025" keyTimes="0;.5;1" dur={`${4 + i % 4}s`} begin={`${-i * .4}s`} repeatCount="indefinite" />
         </circle>)}
       </g>
@@ -125,7 +124,7 @@ export function BlockchainField() {
       <g transform="translate(218 160)">
         <Impact at={2} />
         <circle r="17" fill="url(#flow-halo)" opacity=".45" />
-        <circle r="2.6" fill={neon} filter="url(#flow-neon)" />
+        <circle r="2.6" fill="currentColor" filter="url(#flow-neon)" />
       </g>
       <ChainNode x={258} y={38} chain="base" satellite at={3.6} />
       <ChainNode x={258} y={284} chain="sol" satellite at={4.8} />
