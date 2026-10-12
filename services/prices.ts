@@ -19,4 +19,4 @@ async function coinPaprika():Promise<MarketData>{
  const coins=tickers.filter(t=>t.rank>0&&t.quotes?.USD).sort((a,b)=>a.rank-b.rank).slice(0,10).map(t=>({id:t.id,name:t.name,symbol:t.symbol,image:'',market_cap_rank:t.rank,current_price:t.quotes.USD.price,market_cap:t.quotes.USD.market_cap,price_change_percentage_24h:t.quotes.USD.percent_change_24h,last_updated:t.last_updated}));
  return {coins,prices,updatedAt:new Date().toISOString(),source:'CoinPaprika'};
 }
-export const getMarket=()=>cached<MarketData>('market',60000,async()=>{try{return await coinGecko()}catch{return coinPaprika()}});
+export const getMarket=()=>cached<MarketData>('market',10000,async()=>{try{return await coinGecko()}catch{return coinPaprika()}});
