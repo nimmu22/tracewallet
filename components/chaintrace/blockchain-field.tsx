@@ -103,7 +103,7 @@ function RelayNode({ x, y, at }: { x: number; y: number; at: number }) {
 }
 
 type Point = readonly [number, number];
-// Rounded right-angle trajectories. No path element is painted on the canvas.
+// Rounded right-angle trajectories shared by the connectors and moving packets.
 function route(points: readonly Point[]) {
   let path = `M${points[0].join(" ")}`;
   for (let i = 1; i < points.length - 1; i++) {
@@ -165,11 +165,24 @@ const journeys: { points: Point[]; start: number; end: number }[] = [
 ];
 
 // Theme-aware decorative flow; Bitcoin/TRON logos do not add wallet-scanning support.
-// The motion paths are invisible. Only logos, address points and packets are drawn.
+// Connectors sit behind the nodes; masks keep lines out of logos and address points.
 export function BlockchainField() {
   return <div className="blockchain-field flow-field" aria-hidden="true">
     <svg viewBox="0 0 640 360" fill="none" className="flow-stage">
       <defs>
+        <mask id="flow-route-mask" maskUnits="userSpaceOnUse" x="0" y="0" width="640" height="360">
+          <rect width="640" height="360" fill="white" />
+          {chainNodes.map(node => <g key={`${node.x}-${node.y}`} transform={`translate(${node.x} ${node.y})`}>
+            <circle r={node.source ? 24 : node.satellite ? 16 : 22} fill="black" />
+            <rect className="flow-block-cutout" x="-28" y="-28" width="56" height="56" rx="4" fill="black" />
+          </g>)}
+          {addresses.map(node => <g key={node.label} transform={`translate(${node.x} ${node.y})`}>
+            <circle r="6" fill="black" />
+            <rect className="flow-block-cutout" x="-35" y="-13" width="70" height="44" rx="4" fill="black" />
+          </g>)}
+          <circle cx="508" cy="78" r="6" fill="black" />
+          <circle cx="508" cy="284" r="6" fill="black" />
+        </mask>
         <filter id="flow-neon" x="-100%" y="-100%" width="300%" height="300%" colorInterpolationFilters="sRGB">
           <feGaussianBlur in="SourceAlpha" stdDeviation=".9" result="soft-edge" />
           <feFlood className="flow-bloom" floodColor="#39ff14" floodOpacity=".45" result="green" />
@@ -191,6 +204,9 @@ export function BlockchainField() {
         {Array.from({ length: 16 }, (_, i) => <circle key={i} cx={95 + (i * 71) % 460} cy={18 + (i * 47) % 286} r={i % 4 === 0 ? 1.2 : .65} fill="currentColor" opacity=".1">
           <animate attributeName="opacity" values=".025;.16;.025" keyTimes="0;.5;1" dur={`${4 + i % 4}s`} begin={`${-i * .4}s`} repeatCount="indefinite" />
         </circle>)}
+      </g>
+      <g className="flow-routes" mask="url(#flow-route-mask)">
+        {journeys.map((journey, i) => <path key={i} d={route(journey.points)} />)}
       </g>
       {chainNodes.map(node => <ChainNode key={`${node.x}-${node.y}`} {...node} />)}
       {addresses.map(node => <AddressNode key={node.label} {...node} />)}

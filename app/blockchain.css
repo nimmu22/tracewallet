@@ -183,7 +183,7 @@ footer { padding: 28px 0; }
 @media(prefers-reduced-motion:reduce) { .field-node { animation: none; }.network-card:hover { transform: none; } }
 
 
-/* A single transaction fans out. Only moving packets reveal the invisible routes. */
+/* Branching connectors and moving packets share the same rounded routes. */
 .flow-field { width: min(49%, 640px); background-image: none; }
 /* SVG colours follow the theme directly, without a second animated tree or a React rerender. */
 :root {
@@ -265,3 +265,9 @@ footer { padding: 28px 0; }
 /* Optional block housings are exposed in the design preview for comparison. */
 .flow-node-frame { display: none; fill: var(--card); fill-opacity: .88; stroke: currentColor; stroke-width: .7; stroke-opacity: .25; }
 .flow-field[data-flow-style="blocks"] .flow-node-frame { display: block; }
+
+.flow-routes { fill: none; stroke: var(--flow-ink); stroke-width: .9; stroke-linecap: round; stroke-linejoin: round; opacity: .28; }
+:root[data-theme="light"] .flow-routes { opacity: .38; }
+.flow-block-cutout { display: none; }
+.flow-field[data-flow-style="blocks"] .flow-block-cutout { display: inline; }
+.flow-field[data-flow-lines="hidden"] .flow-routes { display: none; }
