@@ -264,27 +264,25 @@ footer { padding: 28px 0; }
 .flow-field[data-flow-style="blocks"] .flow-block-cutout { display: inline; }
 .flow-field[data-flow-lines="hidden"] .flow-routes { display: none; }
 
-/* Keep the wallet search near the top; decorative flow follows the viewport. */
-body { isolation: isolate; }
-.topbar, .workspace { position: relative; z-index: 1; }
-.wallet-intro { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 25px 0 18px; }
+/* The flow stays inside a compact header; the dashboard background is plain. */
+.wallet-intro { position: relative; display: grid; grid-template-columns: minmax(260px, .9fr) minmax(0, 1.4fr); align-items: center; gap: 24px; min-height: 170px; padding: 20px 0; }
 .wallet-intro .intro-copy { min-width: 0; }
-.wallet-intro h1 { font-size: clamp(26px, 2.5vw, 34px); line-height: 1.2; letter-spacing: -1.1px; margin: 0; white-space: nowrap; }
-.wallet-intro p { font-size: 12px; line-height: 1.6; color: var(--muted-foreground); margin: 8px 0 0; }
-.wallet-intro .hero-signals { margin-top: 0; gap: 14px; font-size: 10px; flex-shrink: 0; }
-.wallet-background { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; opacity: .42; }
-:root[data-theme="light"] .wallet-background { opacity: .34; }
-.wallet-background > .flow-background { width: 100%; max-width: none; height: 100%; margin: 0; display: block; }
-.wallet-background .flow-stage { width: 100%; height: 100%; }
-.flow-background .field-caption { display: none; }
-@media(max-width:1000px) { .wallet-intro .hero-signals { display: none; } }
+.wallet-intro h1 { font-size: clamp(26px, 2.5vw, 34px); line-height: 1.16; letter-spacing: -1.1px; margin: 0; }
+.wallet-intro h1 span { display: block; margin-top: 3px; }
+.wallet-intro p { max-width: 330px; font-size: 12px; line-height: 1.6; color: var(--muted-foreground); margin: 10px 0 0; }
+.header-flow { height: 145px; overflow: hidden; pointer-events: none; }
+.header-flow > .flow-background { display: block; width: 100%; height: 100%; max-width: none; margin: 0; }
+.header-flow .flow-stage { display: block; width: 100%; height: 100%; }
+.header-flow .field-caption { display: none; }
+@media(max-width:760px) {
+  .wallet-intro { grid-template-columns: minmax(200px, 1fr) minmax(0, 1fr); gap: 12px; min-height: 150px; }
+  .header-flow { height: 125px; }
+}
 @media(max-width:600px) {
-  .wallet-intro { padding: 20px 0 15px; }
-  .wallet-intro h1 { font-size: clamp(16px, 4.5vw, 23px); letter-spacing: -.55px; }
-  .wallet-intro p { font-size: 11px; margin-top: 7px; }
-  .wallet-background { opacity: .28; }
-  :root[data-theme="light"] .wallet-background { opacity: .24; }
-  .wallet-background > .flow-background { position: absolute; width: 900px; left: 50%; transform: translateX(-50%); }
+  .wallet-intro { grid-template-columns: 1fr; gap: 8px; padding: 20px 0 15px; min-height: 0; }
+  .wallet-intro h1 { font-size: 27px; letter-spacing: -.7px; }
+  .wallet-intro p { font-size: 11px; margin-top: 8px; max-width: none; }
+  .header-flow { height: 94px; }
 }
 
 /* Solid wallet tiles keep moving flow behind the workspace, never behind data. */
