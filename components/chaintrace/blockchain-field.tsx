@@ -59,8 +59,9 @@ function Impact({ at, small = false }: { at: number; small?: boolean }) {
 
 function ChainNode({ x, y, chain, satellite = false, source = false, at = 4.4 }: { x: number; y: number; chain: Chain; satellite?: boolean; source?: boolean; at?: number }) {
   return <g transform={`translate(${x} ${y})`} className="flow-chain">
+    <rect className="flow-node-frame" x="-27" y="-27" width="54" height="54" rx="4" />
     <Impact at={at} small={satellite} />
-    <g transform={`scale(${satellite ? .57 : source ? .9 : .78})`}>
+    <g transform={`scale(${satellite ? .54 : source ? .8 : .66})`}>
       <g className={"flow-glyph" + (source ? " flow-source-form" : "")} filter="url(#flow-neon)">
         <g className="flow-symbols" stroke="#ff334f" strokeWidth="1.3" strokeLinejoin="miter" strokeMiterlimit="4" paintOrder="fill stroke">
           <ChainSymbol chain={chain} />
@@ -72,6 +73,7 @@ function ChainNode({ x, y, chain, satellite = false, source = false, at = 4.4 }:
 
 function AddressNode({ x, y, label, at = 6.6 }: { x: number; y: number; label: string; at?: number }) {
   return <g transform={`translate(${x} ${y})`}>
+    <rect className="flow-node-frame" x="-34" y="-12" width="68" height="42" rx="4" />
     <Impact at={at} small />
     <circle r="12" fill="url(#flow-halo)" opacity=".65" />
     <circle r="2.2" fill="currentColor" filter="url(#flow-neon)" />
@@ -92,11 +94,81 @@ function Packet({ path, start, end }: { path: string; start: number; end: number
   </g>;
 }
 
+function RelayNode({ x, y, at }: { x: number; y: number; at: number }) {
+  return <g transform={`translate(${x} ${y})`}>
+    <Impact at={at} small />
+    <circle r="11" fill="url(#flow-halo)" />
+    <circle r="2.4" fill="currentColor" filter="url(#flow-neon)" />
+  </g>;
+}
+
+type Point = readonly [number, number];
+// Rounded right-angle trajectories. No path element is painted on the canvas.
+function route(points: readonly Point[]) {
+  let path = `M${points[0].join(" ")}`;
+  for (let i = 1; i < points.length - 1; i++) {
+    const previous = points[i - 1], corner = points[i], next = points[i + 1];
+    const incoming = Math.hypot(corner[0] - previous[0], corner[1] - previous[1]);
+    const outgoing = Math.hypot(next[0] - corner[0], next[1] - corner[1]);
+    const radius = Math.min(10, incoming / 2, outgoing / 2);
+    if (!incoming || !outgoing) continue;
+    const before = [corner[0] + (previous[0] - corner[0]) * radius / incoming, corner[1] + (previous[1] - corner[1]) * radius / incoming];
+    const after = [corner[0] + (next[0] - corner[0]) * radius / outgoing, corner[1] + (next[1] - corner[1]) * radius / outgoing];
+    path += ` L${before.join(" ")} Q${corner.join(" ")} ${after.join(" ")}`;
+  }
+  return path + ` L${points.at(-1)!.join(" ")}`;
+}
+const chainNodes: { x: number; y: number; chain: Chain; at: number; satellite?: boolean; source?: boolean }[] = [
+  { x: 52, y: 180, chain: "btc", at: .55, source: true },
+  { x: 178, y: 88, chain: "eth", at: 2 },
+  { x: 178, y: 274, chain: "sol", at: 2 },
+  { x: 326, y: 38, chain: "base", at: 3.15, satellite: true },
+  { x: 326, y: 108, chain: "bnb", at: 3.35, satellite: true },
+  { x: 326, y: 178, chain: "eth", at: 3.6, satellite: true },
+  { x: 326, y: 248, chain: "tron", at: 3.45, satellite: true },
+  { x: 326, y: 318, chain: "bnb", at: 3.8, satellite: true },
+];
+const addresses = [
+  { x: 444, y: 38, label: "0x…92B1", at: 4.35 },
+  { x: 444, y: 108, label: "0x…B7C4", at: 4.65 },
+  { x: 444, y: 178, label: "0x…D9E1", at: 4.95 },
+  { x: 444, y: 248, label: "T…K8m2", at: 5.25 },
+  { x: 444, y: 318, label: "0x…4F9A", at: 5.65 },
+  { x: 586, y: 36, label: "0x…8A2F", at: 6.65 },
+  { x: 586, y: 114, label: "0x…E4C7", at: 6.95 },
+  { x: 586, y: 184, label: "0x…67C1", at: 6.65 },
+  { x: 586, y: 254, label: "T…m9dA", at: 7.15 },
+  { x: 586, y: 326, label: "0x…A01D", at: 7.3 },
+];
+const journeys: { points: Point[]; start: number; end: number }[] = [
+  { points: [[52,180],[112,180],[112,88],[178,88]], start: .65, end: 2 },
+  { points: [[52,180],[112,180],[112,274],[178,274]], start: .65, end: 2 },
+  { points: [[178,88],[248,88],[248,38],[326,38]], start: 2.2, end: 3.15 },
+  { points: [[178,88],[270,88],[270,108],[326,108]], start: 2.2, end: 3.35 },
+  { points: [[178,88],[226,88],[226,178],[326,178]], start: 2.2, end: 3.6 },
+  { points: [[178,274],[254,274],[254,248],[326,248]], start: 2.2, end: 3.45 },
+  { points: [[178,274],[236,274],[236,318],[326,318]], start: 2.2, end: 3.8 },
+  { points: [[326,38],[444,38]], start: 3.4, end: 4.35 },
+  { points: [[326,108],[444,108]], start: 3.6, end: 4.65 },
+  { points: [[326,178],[444,178]], start: 3.85, end: 4.95 },
+  { points: [[326,248],[444,248]], start: 3.7, end: 5.25 },
+  { points: [[326,318],[444,318]], start: 4.05, end: 5.65 },
+  { points: [[444,38],[478,38],[478,78],[508,78]], start: 4.65, end: 5.55 },
+  { points: [[444,108],[486,108],[486,78],[508,78]], start: 4.85, end: 5.55 },
+  { points: [[508,78],[546,78],[546,36],[586,36]], start: 5.75, end: 6.65 },
+  { points: [[508,78],[538,78],[538,114],[586,114]], start: 5.75, end: 6.95 },
+  { points: [[444,178],[520,178],[520,184],[586,184]], start: 5.15, end: 6.65 },
+  { points: [[444,248],[480,248],[480,284],[508,284]], start: 5.65, end: 6.1 },
+  { points: [[444,318],[478,318],[478,284],[508,284]], start: 5.8, end: 6.25 },
+  { points: [[508,284],[548,284],[548,254],[586,254]], start: 6.45, end: 7.15 },
+  { points: [[508,284],[538,284],[538,326],[586,326]], start: 6.45, end: 7.3 },
+];
+
 // Theme-aware decorative flow; Bitcoin/TRON logos do not add wallet-scanning support.
 // The motion paths are invisible. Only logos, address points and packets are drawn.
 export function BlockchainField() {
   return <div className="blockchain-field flow-field" aria-hidden="true">
-    <svg viewBox="0 0 600 340" fill="none" className="flow-stage">
+    <svg viewBox="0 0 640 360" fill="none" className="flow-stage">
       <defs>
         <filter id="flow-neon" x="-100%" y="-100%" width="300%" height="300%" colorInterpolationFilters="sRGB">
           <feGaussianBlur in="SourceAlpha" stdDeviation=".9" result="soft-edge" />
@@ -114,41 +186,17 @@ export function BlockchainField() {
           <stop offset="1" stopColor="currentColor" stopOpacity="0" />
         </radialGradient>
       </defs>
-      <ellipse cx="300" cy="160" rx="260" ry="160" fill="url(#flow-ambient)" />
+      <ellipse cx="330" cy="180" rx="280" ry="165" fill="url(#flow-ambient)" />
       <g className="flow-dust">
         {Array.from({ length: 16 }, (_, i) => <circle key={i} cx={95 + (i * 71) % 460} cy={18 + (i * 47) % 286} r={i % 4 === 0 ? 1.2 : .65} fill="currentColor" opacity=".1">
           <animate attributeName="opacity" values=".025;.16;.025" keyTimes="0;.5;1" dur={`${4 + i % 4}s`} begin={`${-i * .4}s`} repeatCount="indefinite" />
         </circle>)}
       </g>
-      <ChainNode x={66} y={160} chain="btc" source at={.55} />
-      <g transform="translate(218 160)">
-        <Impact at={2} />
-        <circle r="17" fill="url(#flow-halo)" opacity=".45" />
-        <circle r="2.6" fill="currentColor" filter="url(#flow-neon)" />
-      </g>
-      <ChainNode x={258} y={38} chain="base" satellite at={3.6} />
-      <ChainNode x={258} y={284} chain="sol" satellite at={4.8} />
-      <ChainNode x={390} y={64} chain="eth" />
-      <ChainNode x={390} y={160} chain="bnb" />
-      <ChainNode x={390} y={256} chain="tron" />
-      <AddressNode x={462} y={24} label="0x…92B1" at={5.7} />
-      <AddressNode x={435} y={304} label="7m…pQ9" at={7.2} />
-      <AddressNode x={545} y={64} label="0x…8A2F" />
-      <AddressNode x={515} y={140} label="0x…B7C4" />
-      <AddressNode x={562} y={195} label="0x…D9E1" />
-      <AddressNode x={545} y={256} label="T…K8m2" />
-      <Packet path="M66 160 L218 160" start={.6} end={2} />
-      <Packet path="M218 160 L258 38" start={2.25} end={3.6} />
-      <Packet path="M258 38 L462 24" start={3.85} end={5.7} />
-      <Packet path="M218 160 L258 284" start={2.25} end={4.8} />
-      <Packet path="M258 284 L435 304" start={5.05} end={7.2} />
-      <Packet path="M218 160 L390 64" start={2.25} end={4.4} />
-      <Packet path="M218 160 L390 160" start={2.25} end={4.4} />
-      <Packet path="M218 160 L390 256" start={2.25} end={4.4} />
-      <Packet path="M390 64 L545 64" start={4.7} end={6.6} />
-      <Packet path="M390 160 L515 140" start={4.7} end={6.6} />
-      <Packet path="M390 160 L562 195" start={4.7} end={6.6} />
-      <Packet path="M390 256 L545 256" start={4.7} end={6.6} />
+      {chainNodes.map(node => <ChainNode key={`${node.x}-${node.y}`} {...node} />)}
+      {addresses.map(node => <AddressNode key={node.label} {...node} />)}
+      <RelayNode x={508} y={78} at={5.55} />
+      <RelayNode x={508} y={284} at={6.25} />
+      {journeys.map((journey, i) => <Packet key={i} path={route(journey.points)} start={journey.start} end={journey.end} />)}
     </svg>
     <span className="field-caption mono">ILLUSTRATIVE MULTICHAIN FLOW</span>
   </div>;
